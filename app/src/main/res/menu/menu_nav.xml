@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/account"
+        android:title="@string/account">
+        <menu>
+            <item android:id="@+id/action_change_info"
+                android:title="@string/change_information"
+                android:icon="@drawable/ic_account_box_black_24dp"/>
+            <item android:id="@+id/action_change_password"
+                android:title="@string/change_password"
+                android:icon="@drawable/ic_lock_outline_black_24dp"/>
+            <item android:id="@+id/action_log_out"
+                android:title="@string/log_out"
+                android:icon="@drawable/ic_exit_to_app_black_24dp"/>
+        </menu>
+    </item>
+</menu>

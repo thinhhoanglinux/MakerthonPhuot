@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "851033135506",
+    "firebase_url": "https://phuot-62649.firebaseio.com",
+    "project_id": "phuot-62649",
+    "storage_bucket": "phuot-62649.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:851033135506:android:a2c9ca7d068d1450",
+        "android_client_info": {
+          "package_name": "com.example.tkkil.phuot"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "851033135506-d07oh56j8ole8romlpvraqrqrajs4r4q.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.tkkil.phuot",
+            "certificate_hash": "7d55b44953befb7f2a5400d3b076b480d5940927"
+          }
+        },
+        {
+          "client_id": "851033135506-5io9738r7uoi63u2p9l48go7a8f6g6up.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCv_et2rKX5uBx1d1cVxR07BLPJ0BY_III"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "851033135506-5io9738r7uoi63u2p9l48go7a8f6g6up.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

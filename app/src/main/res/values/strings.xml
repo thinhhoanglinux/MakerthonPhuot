@@ -1,0 +1,33 @@
+<resources>
+    <string name="app_name">Phuot</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="login">Login</string>
+    <string name="logo_hutech">Logo Hutech</string>
+    <string name="forgot_a_password">Forgot A Password</string>
+    <string name="i_don_t_have_an_account_sign_up">I don\'t have an account? Sign up</string>
+    <string name="username">Username</string>
+    <string name="register">Register</string>
+    <string name="back_to_sign_in">Back to sign in</string>
+    <string name="more">More</string>
+    <string name="log_out">Log Out</string>
+    <string name="add_group">Add Group</string>
+    <string name="name_group">Name group</string>
+    <string name="create">Create</string>
+    <string name="cancel">Cancel</string>
+    <string name="name">Name</string>
+    <string name="add_new_group">Add New Group</string>
+    <string name="fullname">Full Name</string>
+    <string name="account">Account</string>
+    <string name="change_information">Change Information</string>
+    <string name="change_password">Change Password</string>
+    <string name="openDrawer">Open navigation drawer</string>
+    <string name="closeDrawer">Close navigation drawer</string>
+    <string name="old_password">Old Password</string>
+    <string name="re_password">Re-Password</string>
+    <string name="birthday">Birthday</string>
+    <string name="phone">Phone</string>
+    <string name="address">Address</string>
+    <string name="change_avatar">Change Avatar</string>
+    <string name="join">JOIN</string>
+</resources>

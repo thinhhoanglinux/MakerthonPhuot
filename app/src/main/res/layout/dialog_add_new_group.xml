@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@android:color/white">
+
+    <LinearLayout
+        android:id="@+id/abc"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:padding="10dp"
+        tools:ignore="UseCompoundDrawables">
+
+        <ImageView
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:contentDescription="@string/create"
+            android:src="@drawable/ic_group_add_black_24dp" />
+
+        <TextView
+            android:id="@+id/txtvTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="10dp"
+            android:text="@string/add_new_group"
+            android:textColor="@color/colorPrimary"
+            android:textSize="22sp" />
+    </LinearLayout>
+
+    <View
+        android:id="@+id/viewtemp"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_below="@id/abc"
+        android:background="@color/colorPrimary" />
+
+    <LinearLayout
+        android:id="@+id/def"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/viewtemp"
+        android:background="@android:color/white"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <android.support.design.widget.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <EditText
+                android:id="@+id/edtNameGroup"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:drawablePadding="16dp"
+                android:drawableStart="@drawable/ic_account_box_black_24dp"
+                android:hint="@string/name"
+                android:inputType="text"
+                android:padding="16dp" />
+        </android.support.design.widget.TextInputLayout>
+
+        <android.support.design.widget.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:passwordToggleEnabled="true">
+
+            <EditText
+                android:id="@+id/edtPwdGroup"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:drawablePadding="16dp"
+                android:drawableStart="@drawable/ic_lock_outline_black_24dp"
+                android:hint="@string/password"
+                android:inputType="textPassword"
+                android:padding="16dp" />
+        </android.support.design.widget.TextInputLayout>
+    </LinearLayout>
+
+</RelativeLayout>
