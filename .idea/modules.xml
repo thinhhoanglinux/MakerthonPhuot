@@ -2,7 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/Phuot.iml" filepath="$PROJECT_DIR$/Phuot.iml" />
+      <module fileurl="file://C:\Users\anhho\AndroidStudioProjects\Phuot123\Phuot.iml" filepath="C:\Users\anhho\AndroidStudioProjects\Phuot123\Phuot.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Phuot123.iml" filepath="$PROJECT_DIR$/Phuot123.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
     </modules>
   </component>
