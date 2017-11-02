@@ -28,7 +28,6 @@
             app:titleTextColor="@android:color/white" />
 
         <fragment
-            android:layout_marginTop="100dp"
             android:id="@+id/fragment"
             android:name="com.google.android.gms.maps.MapFragment"
             android:layout_width="match_parent"
