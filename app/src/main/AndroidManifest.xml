@@ -39,10 +39,6 @@
             android:theme="@style/AppThemeFullScreen"/>
         <activity android:name=".Activities.ChangePasswordActivity"/>
         <activity android:name=".Activities.ChangeInformationActivity"/>
-        <activity
-            android:name=".MapsActivity"
-            android:label="@string/title_activity_maps">
-        </activity>
     </application>
 
 </manifest>
