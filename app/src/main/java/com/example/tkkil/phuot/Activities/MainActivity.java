@@ -126,6 +126,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     Toolbar toolbar;
 
+    HashMap<String, Marker> hashMap = new HashMap<>();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -200,17 +202,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-        /*mLocationRequest = new LocationRequest();
-        mLocationRequest.setInterval(1000);
-        mLocationRequest.setFastestInterval(1000);
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        locationRequest = LocationRequest.create();
+        locationRequest.setInterval(1000);
+        locationRequest.setFastestInterval(1000);
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) ==
                 PackageManager.PERMISSION_GRANTED) {
-            LocationServices.FusedLocationApi.requestLocationUpdates(mClient, mLocationRequest, this);
-        }*/
+            LocationServices.FusedLocationApi.requestLocationUpdates(mClient, locationRequest, this);
+        }
 
-        locationRequest = LocationRequest.create();
+        /*locationRequest = LocationRequest.create();
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         locationRequest.setInterval(1000);
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -223,7 +225,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             // for ActivityCompat#requestPermissions for more details.
             return;
         }
-        LocationServices.FusedLocationApi.requestLocationUpdates(mClient, locationRequest, this);
+        LocationServices.FusedLocationApi.requestLocationUpdates(mClient, locationRequest, this);*/
 
     }
 
@@ -244,28 +246,32 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         Double curLat = location.getLatitude();
         Double curLong = location.getLongitude();
 
-        if(toolbar.getSubtitle()!=null){
-            myRef.child("Groups/bbbbbb/members").child(mAuth.getCurrentUser().getUid()).setValue(curLat+" " +curLong);
+        if (toolbar.getSubtitle() != null) {
+            myRef.child("Groups/" + toolbar.getSubtitle() + "/members").child(mAuth.getCurrentUser().getUid()).setValue(curLat + " " + curLong);
+            //Log.d("AAA",curLat + " " + curLong);*/
+
+
         }
 
-        if (mCurrentLocationMarker != null) {
-            mCurrentLocationMarker.remove();
-        }
 
-        LatLng latLng = new LatLng(curLat,curLong);
-        MarkerOptions markerOptions = new MarkerOptions();
-        markerOptions.position(latLng);
-        markerOptions.title("Current Location");
-        markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
-
-        mCurrentLocationMarker = mMap.addMarker(markerOptions);
-
-
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
-        mMap.animateCamera(CameraUpdateFactory.zoomBy(10));
+//        if (mCurrentLocationMarker != null) {
+//            mCurrentLocationMarker.remove();
+//        }
 //
-        CameraPosition cameraPosition = new CameraPosition.Builder().target(latLng).zoom(15).build();
-        mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+//        LatLng latLng = new LatLng(curLat,curLong);
+//        MarkerOptions markerOptions = new MarkerOptions();
+//        markerOptions.position(latLng);
+//        markerOptions.title("Current Location");
+//        markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+//
+//        mCurrentLocationMarker = mMap.addMarker(markerOptions);
+
+
+//        mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+//        mMap.animateCamera(CameraUpdateFactory.zoomBy(10));
+//
+//        CameraPosition cameraPosition = new CameraPosition.Builder().target(latLng).zoom(15).build();
+//        mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
 
 //        if (mClient != null) {
 //            LocationServices.FusedLocationApi.removeLocationUpdates(mClient, this);
@@ -641,7 +647,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                     Double lng = Double.parseDouble(a[1]);
                                     MarkerOptions markerOptions = new MarkerOptions();
                                     markerOptions.position(new LatLng(lat, lng));
-                                    mMap.addMarker(markerOptions);
+                                    Marker marker = mMap.addMarker(markerOptions);
+                                    hashMap.put(dataSnapshot.getKey(), marker);
+
 //                                    myRef.child("Groups/"+model.getName()+"/members/"+mAuth.getCurrentUser().getUid()).setValue(mCurrentLocationMarker.getPosition().latitude+" " +mCurrentLocationMarker.getPosition().longitude);
 
                                     myDrawer.closeDrawer(GravityCompat.START);
@@ -650,6 +658,21 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                             @Override
                             public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+                                if (dataSnapshot.getKey().contains(mAuth.getCurrentUser().getUid())) {
+
+                                } else {
+                                    String[] a = dataSnapshot.getValue().toString().split(" ");
+                                    Double latt = Double.parseDouble(a[0]);
+                                    Double longg = Double.parseDouble(a[1]);
+                                    hashMap.get(dataSnapshot.getKey()).remove();
+                                    hashMap.remove(dataSnapshot.getKey());
+                                    MarkerOptions markerOptions = new MarkerOptions();
+                                    markerOptions.position(new LatLng(latt, longg));
+                                    Log.d("BBB", latt + " " + longg);
+                                    Marker marker = mMap.addMarker(markerOptions);
+                                    hashMap.put(dataSnapshot.getKey(), marker);
+                                }
+
 
                             }
 
