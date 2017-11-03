@@ -124,6 +124,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     FirebaseRecyclerAdapter adapter;
 
+    Toolbar toolbar;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -223,6 +224,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onLocationChanged(Location location) {
         mLastLocation = location;
+        if(toolbar.getSubtitle()!=null){
+            myRef.child("Groups/"+toolbar.getSubtitle()+"/members/"+mAuth.getCurrentUser().getUid()).setValue(location.getLatitude()+" "+location.getLongitude());
+        }
 
         if (mCurrentLocationMarker != null) {
             mCurrentLocationMarker.remove();
@@ -235,6 +239,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
 
         mCurrentLocationMarker = mMap.addMarker(markerOptions);
+
 /*
         mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
         mMap.animateCamera(CameraUpdateFactory.zoomBy(10));*/
@@ -473,7 +478,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void initToolbar() {
-        Toolbar toolbar = findViewById(R.id.toolbar);
+        toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         toolbar.setTitle("Home");
         myDrawer = findViewById(R.id.myDrawer);
@@ -604,19 +609,23 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 holder.setItemClickListener(new ItemClickListener() {
                     @Override
                     public void onClick(View view, int position, boolean isLongClick) {
+                        toolbar.setSubtitle(model.getName());
                         myRef.child("Groups/"+model.getName()+"/members/").addChildEventListener(new ChildEventListener() {
                             @Override
                             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
                                 if(dataSnapshot.getKey().contains(mAuth.getCurrentUser().getUid())){
 
                                 }else{
-                                    Toast.makeText(MainActivity.this, ""+dataSnapshot.getKey(), Toast.LENGTH_SHORT).show();
+//                                    Toast.makeText(MainActivity.this, ""+dataSnapshot.getKey(), Toast.LENGTH_SHORT).show();
                                     String[] a = dataSnapshot.getValue().toString().split(" ");
                                     Double lat = Double.parseDouble(a[0]);
                                     Double lng = Double.parseDouble(a[1]);
                                     MarkerOptions markerOptions = new MarkerOptions();
                                     markerOptions.position(new LatLng(lat,lng));
                                     mMap.addMarker(markerOptions);
+//                                    myRef.child("Groups/"+model.getName()+"/members/"+mAuth.getCurrentUser().getUid()).setValue(mCurrentLocationMarker.getPosition().latitude+" " +mCurrentLocationMarker.getPosition().longitude);
+
+                                    myDrawer.closeDrawer(GravityCompat.START);
                                 }
                             }
 
