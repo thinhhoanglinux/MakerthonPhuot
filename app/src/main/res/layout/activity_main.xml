@@ -3,14 +3,15 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/myDrawer"
-    android:background="@color/colorPrimary"
-    android:fitsSystemWindows="true"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/colorPrimary"
+    android:fitsSystemWindows="true"
     tools:context="com.example.tkkil.phuot.Activities.MainActivity"
     tools:openDrawer="start">
 
-    <RelativeLayout
+    <LinearLayout
+        android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fitsSystemWindows="true">
@@ -21,26 +22,63 @@
             android:layout_height="wrap_content"
             android:background="@color/colorPrimary"
             android:minHeight="?attr/actionBarSize"
-            app:subtitleTextColor="@android:color/white"
             android:theme="@style/arrow"
             app:popupTheme="@style/AppTheme.PopupOverlay"
+            app:subtitleTextColor="@android:color/white"
             app:titleTextColor="@android:color/white" />
-        <android.support.v7.widget.RecyclerView
-            android:layout_below="@id/toolbar"
-            android:id="@+id/rcvListGroup"
+
+        <fragment
+            android:layout_marginTop="100dp"
+            android:id="@+id/fragment"
+            android:name="com.google.android.gms.maps.MapFragment"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"/>
-    </RelativeLayout>
+            android:layout_height="match_parent" />
+    </LinearLayout>
 
     <android.support.design.widget.NavigationView
-        android:fitsSystemWindows="true"
         android:id="@+id/myNav"
-        android:layout_width="250dp"
+        android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="start"
-        app:itemIconTint="@android:color/white"
-        app:itemTextColor="@android:color/white"
-        app:headerLayout="@layout/header_nav"
-        app:menu="@menu/menu_nav"
-        android:background="@color/colorPrimary"/>
+        android:background="@color/colorPrimary"
+        android:fitsSystemWindows="true">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <de.hdodenhof.circleimageview.CircleImageView
+                android:id="@+id/nav_avatar"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:layout_centerHorizontal="true"
+                android:layout_margin="10dp"
+                android:src="@drawable/logo_hutech" />
+
+            <TextView
+                android:id="@+id/nav_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/nav_avatar"
+                android:textAlignment="center"
+                android:textColor="@android:color/white"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/nav_email"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/nav_name"
+                android:textAlignment="center"
+                android:textColor="@android:color/white"
+                android:textSize="14sp" />
+
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/nav_rcvListGroup"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_below="@id/nav_email" />
+        </RelativeLayout>
+
+    </android.support.design.widget.NavigationView>
 </android.support.v4.widget.DrawerLayout>

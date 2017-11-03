@@ -30,4 +30,8 @@
     <string name="address">Address</string>
     <string name="change_avatar">Change Avatar</string>
     <string name="join">JOIN</string>
+    <string name="detail">Detail</string>
+    <string name="edit">Edit</string>
+    <string name="delete">Delete</string>
+    <string name="title_activity_maps">Map</string>
 </resources>

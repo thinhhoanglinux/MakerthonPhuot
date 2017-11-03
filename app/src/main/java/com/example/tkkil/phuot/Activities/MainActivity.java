@@ -1,16 +1,21 @@
 package com.example.tkkil.phuot.Activities;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.location.Location;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -20,6 +25,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -32,17 +38,27 @@ import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.tkkil.phuot.Interface.ItemClickListener;
 import com.example.tkkil.phuot.Models.Group;
 import com.example.tkkil.phuot.Models.User;
 import com.example.tkkil.phuot.R;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.firebase.ui.database.FirebaseRecyclerOptions;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -56,13 +72,20 @@ import com.squareup.picasso.Picasso;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 import es.dmoral.toasty.Toasty;
 
-public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
+public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener, LocationListener {
+
+    private GoogleMap GOOGLEMAP;
+
     private static final int REQUEST_SELECT_PICTURE = 999;
     private StorageReference mStorage;
     private FirebaseAuth mAuth;
@@ -72,7 +95,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private ProgressDialog loading;
     private Uri filepath;
     Bitmap bitmap;
-    RecyclerView rcvListGroup;
+    RecyclerView nav_rcvListGroup;
     //Dialog
     EditText edtNameGroup, edtPwdGroup;
     //Header-Nav
@@ -82,59 +105,22 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private CircleImageView dialog_avatar;
     private User user;
     FirebaseRecyclerAdapter adapterabc;
+    ArrayList<String> keys;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        initGoogleMap();
         mStorage = FirebaseStorage.getInstance().getReference();
         mAuth = FirebaseAuth.getInstance();
         myRef = FirebaseDatabase.getInstance().getReference();
         loading = new ProgressDialog(this, R.style.MyDialogTheme);
         loading.setTitle("LOADING");
         loading.setMessage("Please wait...");
+
         init();
         initToolbar();
-
-        //Recycler
-        rcvListGroup = findViewById(R.id.rcvListGroup);
-        rcvListGroup.setHasFixedSize(true);
-        rcvListGroup.setLayoutManager(new LinearLayoutManager(this));
-
-        Query query = myRef.child("Groups");
-        FirebaseRecyclerOptions<Group> options = new FirebaseRecyclerOptions.Builder<Group>().setQuery(query,Group.class).build();
-        adapterabc = new FirebaseRecyclerAdapter<Group,ViewHolder>(options) {
-
-            @Override
-            public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-                View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_group,parent,false);
-                return new ViewHolder(view);
-            }
-
-            @Override
-            protected void onBindViewHolder(ViewHolder holder, final int position, final Group model) {
-                holder.txtvName.setText(model.getName());
-                holder.txtvTime.setText(model.getTime());
-
-                holder.btnJoin.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        myRef.child("Users").child(model.getHost()).addValueEventListener(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(DataSnapshot dataSnapshot) {
-                                User user = dataSnapshot.getValue(User.class);
-                                Toast.makeText(MainActivity.this, ""+user.getFullname(), Toast.LENGTH_SHORT).show();
-                            }
-
-                            @Override
-                            public void onCancelled(DatabaseError databaseError) {
-
-                            }
-                        });
-                    }
-                });
-            }
-        };
-        rcvListGroup.setAdapter(adapterabc);
     }
 
     @Override
@@ -149,15 +135,76 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         adapterabc.stopListening();
     }
 
-    public static class ViewHolder extends RecyclerView.ViewHolder{
-        TextView txtvName,txtvQuantity,txtvTime;
-        Button btnJoin;
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+
+    }
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        GOOGLEMAP = googleMap;
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        GOOGLEMAP.setMyLocationEnabled(true);
+    }
+
+    private void initGoogleMap(){
+        MapFragment mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.fragment);
+        mapFragment.getMapAsync(this);
+    }
+
+    public static class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
+        TextView txtvNameGroup, txtvQuantity, txtvFullname;
+        Button btnDelete, btnEdit;
+        ItemClickListener itemClickListener;
+
         ViewHolder(View itemView) {
             super(itemView);
-            txtvName = itemView.findViewById(R.id.txtvName);
+            txtvNameGroup = itemView.findViewById(R.id.txtvNameGroup);
             txtvQuantity = itemView.findViewById(R.id.txtvQuantity);
-            txtvTime = itemView.findViewById(R.id.txtvTime);
-            btnJoin = itemView.findViewById(R.id.btnJoin);
+            txtvFullname = itemView.findViewById(R.id.txtvFullname);
+            btnDelete = itemView.findViewById(R.id.btnDelete);
+            btnEdit = itemView.findViewById(R.id.btnEdit);
+            itemView.setOnClickListener(this);
+            itemView.setOnLongClickListener(this);
+        }
+
+        public void setItemClickListener(ItemClickListener itemClickListener) {
+            this.itemClickListener = itemClickListener;
+        }
+
+        @Override
+        public void onClick(View view) {
+            itemClickListener.onClick(view, getAdapterPosition(), false);
+        }
+
+        @Override
+        public boolean onLongClick(View view) {
+            itemClickListener.onClick(view, getAdapterPosition(), true);
+            return true;
         }
     }
 
@@ -198,29 +245,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             case R.id.action_add_group:
                 addGroupDialog();
                 break;
-            default:
+            case R.id.action_change_info:
+                startActivity(new Intent(MainActivity.this, ChangeInformationActivity.class));
                 break;
-        }
-        return true;
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQUEST_SELECT_PICTURE && resultCode == RESULT_OK && data != null) {
-            filepath = data.getData();
-            try {
-                bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), filepath);
-                dialog_avatar.setImageBitmap(bitmap);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    @Override
-    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-        switch (item.getItemId()) {
+            case R.id.action_change_password:
+                startActivity(new Intent(MainActivity.this, ChangePasswordActivity.class));
+                break;
             case R.id.action_log_out:
                 AlertDialog.Builder ab = new AlertDialog.Builder(this, R.style.MyDialogTheme);
                 ab.setTitle("SIGN OUT");
@@ -242,16 +272,24 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 });
                 alertDialog.show();
                 break;
-            case R.id.action_change_password:
-                startActivity(new Intent(MainActivity.this, ChangePasswordActivity.class));
-                break;
-            case R.id.action_change_info:
-                startActivity(new Intent(MainActivity.this, ChangeInformationActivity.class));
-                break;
             default:
                 break;
         }
         return true;
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_SELECT_PICTURE && resultCode == RESULT_OK && data != null) {
+            filepath = data.getData();
+            try {
+                bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), filepath);
+                dialog_avatar.setImageBitmap(bitmap);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private boolean Validate() {
@@ -292,6 +330,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getResources().getColor(R.color.colorPrimary));
                 Button Positive = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
                 Positive.setOnClickListener(new View.OnClickListener() {
+                    @SuppressLint("SimpleDateFormat")
                     @Override
                     public void onClick(View view) {
                         if (!Validate()) {
@@ -300,31 +339,32 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                         dialog.dismiss();
                         Snackbar.make(myDrawer, "Success", Snackbar.LENGTH_SHORT).show();
                         Group group = new Group();
-                        group.setHost(mAuth.getCurrentUser().getUid());
-                        group.setName(edtNameGroup.getText().toString().trim());
-                        group.setPass(edtPwdGroup.getText().toString().trim());
-                        group.setTime(new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(Calendar.getInstance().getTime()));
-                        myRef.child("Groups").push().setValue(group)
-                                .addOnCompleteListener(new OnCompleteListener<Void>() {
-                                    @Override
-                                    public void onComplete(@NonNull Task<Void> task) {
-                                        if (task.isSuccessful()) {
-                                            Snackbar.make(myDrawer, "Success", Snackbar.LENGTH_SHORT).show();
+                        FirebaseUser mUser = mAuth.getCurrentUser();
+                        if (mUser != null) {
+                            group.setHost(mUser.getUid());
+                            group.setName(edtNameGroup.getText().toString().trim());
+                            group.setPass(edtPwdGroup.getText().toString().trim());
+                            group.setTime(new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(Calendar.getInstance().getTime()));
+                            myRef.child("Groups").push().setValue(group)
+                                    .addOnCompleteListener(new OnCompleteListener<Void>() {
+                                        @Override
+                                        public void onComplete(@NonNull Task<Void> task) {
+                                            if (task.isSuccessful()) {
+                                                Snackbar.make(myDrawer, "Success", Snackbar.LENGTH_SHORT).show();
+                                            }
                                         }
-                                    }
-                                })
-                                .addOnFailureListener(new OnFailureListener() {
-                                    @Override
-                                    public void onFailure(@NonNull Exception e) {
-                                        Snackbar.make(myDrawer, "Error: " + e.getMessage(), Snackbar.LENGTH_SHORT).show();
-                                    }
-                                });
+                                    })
+                                    .addOnFailureListener(new OnFailureListener() {
+                                        @Override
+                                        public void onFailure(@NonNull Exception e) {
+                                            Snackbar.make(myDrawer, "Error: " + e.getMessage(), Snackbar.LENGTH_SHORT).show();
+                                        }
+                                    });
+                        }
                     }
                 });
             }
         });
-
-
         dialog.setCanceledOnTouchOutside(false);
         dialog.show();
     }
@@ -333,9 +373,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         toolbar.setTitle("Home");
-        if (mAuth.getCurrentUser() != null)
-            toolbar.setSubtitle(mAuth.getCurrentUser().getEmail());
-
         myDrawer = findViewById(R.id.myDrawer);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, myDrawer, toolbar, R.string.openDrawer, R.string.closeDrawer);
         myDrawer.addDrawerListener(toggle);
@@ -353,13 +390,207 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     private void init() {
         myNav = findViewById(R.id.myNav);
-        myNav.setNavigationItemSelectedListener(this);
-        final View header_nav = myNav.getHeaderView(0);
-        header_nav.setPadding(0, onGetHeightStatus(), 0, 0);
+        myNav.setPadding(0, onGetHeightStatus(), 0, 0);
 
-        nav_avatar = header_nav.findViewById(R.id.nav_avatar);
-        nav_name = header_nav.findViewById(R.id.nav_name);
-        nav_email = header_nav.findViewById(R.id.nav_email);
+        nav_avatar = findViewById(R.id.nav_avatar);
+        nav_name = findViewById(R.id.nav_name);
+        nav_email = findViewById(R.id.nav_email);
+
+        keys = new ArrayList<>();
+        myRef.child("Groups").addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                s = dataSnapshot.getKey();
+                keys.add(s);
+            }
+
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot) {
+
+            }
+
+            @Override
+            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+
+        //Recycler
+        /*rcvListGroup = findViewById(R.id.rcvListGroup);
+        rcvListGroup.setHasFixedSize(true);
+        rcvListGroup.setLayoutManager(new LinearLayoutManager(this));
+        Query query = myRef.child("Groups");
+        FirebaseRecyclerOptions<Group> options = new FirebaseRecyclerOptions.Builder<Group>().setQuery(query, Group.class).build();
+        adapterabc = new FirebaseRecyclerAdapter<Group, ViewHolder>(options) {
+
+            @Override
+            public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+                View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_group, parent, false);
+                return new ViewHolder(view);
+            }
+
+            @Override
+            protected void onBindViewHolder(ViewHolder holder, final int position, final Group model) {
+                holder.txtvName.setText(model.getName());
+                holder.txtvTime.setText(model.getTime());
+
+                holder.btnDetail.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        myRef.child("Users").child(model.getHost()).addValueEventListener(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(DataSnapshot dataSnapshot) {
+                                User user = dataSnapshot.getValue(User.class);
+                                if (user != null) {
+                                    AlertDialog.Builder ab = new AlertDialog.Builder(MainActivity.this);
+                                    ab.setTitle("INFORMATION");
+                                    View dialog_info_host_view = LayoutInflater.from(MainActivity.this).inflate(R.layout.dialog_info_host, null);
+                                    ab.setView(dialog_info_host_view);
+                                    TextView txtvName = dialog_info_host_view.findViewById(R.id.txtvFullname);
+                                    TextView txtvBirthday = dialog_info_host_view.findViewById(R.id.txtvBirthday);
+                                    TextView txtvPhone = dialog_info_host_view.findViewById(R.id.txtvPhone);
+                                    TextView txtvEmail = dialog_info_host_view.findViewById(R.id.txtvEmail);
+                                    txtvName.setText(user.getFullname());
+                                    txtvBirthday.setText(user.getBirthday());
+                                    txtvPhone.setText(user.getPhone());
+                                    txtvEmail.setText(user.getEmail());
+                                    AlertDialog alertDialog = ab.create();
+                                    alertDialog.show();
+                                }
+                            }
+
+                            @Override
+                            public void onCancelled(DatabaseError databaseError) {
+
+                            }
+                        });
+                    }
+                });
+                holder.btnJoin.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        if (mAuth.getCurrentUser().getUid().equalsIgnoreCase(model.getHost())) {
+                            Toast.makeText(MainActivity.this, "Can't join!", Toast.LENGTH_SHORT).show();
+                        } else {
+                            AlertDialog.Builder ab = new AlertDialog.Builder(MainActivity.this, R.style.MyDialogTheme);
+                            ab.setTitle("JOIN GROUP");
+                            View dialog_join_group_view = LayoutInflater.from(MainActivity.this).inflate(R.layout.dialog_join_group, null);
+                            ab.setView(dialog_join_group_view);
+                            final EditText edtPwdGroup = dialog_join_group_view.findViewById(R.id.edtPwdGroup);
+                            ab.setPositiveButton("JOIN", null);
+                            ab.setNegativeButton("CANCEL", null);
+                            final AlertDialog alertDialog = ab.create();
+                            alertDialog.setOnShowListener(new DialogInterface.OnShowListener() {
+                                @Override
+                                public void onShow(DialogInterface dialogInterface) {
+                                    alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getResources().getColor(R.color.colorPrimary));
+                                    Button Positive = alertDialog.getButton(AlertDialog.BUTTON_POSITIVE);
+                                    Positive.setOnClickListener(new View.OnClickListener() {
+                                        @Override
+                                        public void onClick(View view) {
+                                            if (TextUtils.isEmpty(edtPwdGroup.getText().toString().trim())) {
+                                                edtPwdGroup.setError("Please enter Password!");
+                                                return;
+                                            }
+                                            myRef.child("Groups").child(keys.get(position)).child("pass").addValueEventListener(new ValueEventListener() {
+                                                @Override
+                                                public void onDataChange(DataSnapshot dataSnapshot) {
+                                                    if (dataSnapshot.getValue(String.class).equalsIgnoreCase(edtPwdGroup.getText().toString().trim())) {
+                                                        myRef.child("Groups").child(keys.get(position)).child("members").child(mAuth.getCurrentUser().getUid()).setValue("Joined");
+                                                        alertDialog.dismiss();
+                                                    } else {
+                                                        Toast.makeText(MainActivity.this, "Wrong, can't join!", Toast.LENGTH_SHORT).show();
+                                                    }
+                                                }
+
+                                                @Override
+                                                public void onCancelled(DatabaseError databaseError) {
+
+                                                }
+                                            });
+                                        }
+                                    });
+                                }
+                            });
+                            alertDialog.setCanceledOnTouchOutside(false);
+                            alertDialog.show();
+
+                        }
+                    }
+                });
+            }
+        };
+        rcvListGroup.setAdapter(adapterabc);*/
+
+        nav_rcvListGroup = findViewById(R.id.nav_rcvListGroup);
+        nav_rcvListGroup.setHasFixedSize(true);
+        nav_rcvListGroup.setLayoutManager(new LinearLayoutManager(this));
+
+        Query query = myRef.child("Groups").orderByChild("host").startAt(mAuth.getCurrentUser().getUid()).endAt(mAuth.getCurrentUser().getUid());
+        FirebaseRecyclerOptions<Group> options = new FirebaseRecyclerOptions.Builder<Group>().setQuery(query, Group.class).build();
+        adapterabc = new FirebaseRecyclerAdapter<Group, ViewHolder>(options) {
+
+            @Override
+            public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+                View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_group, parent, false);
+                return new ViewHolder(view);
+            }
+
+            @Override
+            protected void onBindViewHolder(final ViewHolder holder, final int position, final Group model) {
+                holder.txtvNameGroup.setText(model.getName());
+                myRef.child("Users").child(model.getHost()).child("fullname").addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        holder.txtvFullname.setText(dataSnapshot.getValue(String.class));
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                });
+                holder.btnDelete.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        AlertDialog.Builder ab = new AlertDialog.Builder(MainActivity.this, R.style.MyDialogTheme);
+                        ab.setTitle("DELETE");
+                        ab.setPositiveButton("YES", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                myRef.child("Groups").child(keys.get(position)).removeValue();
+                            }
+                        });
+                        ab.setNegativeButton("NO", null);
+                        AlertDialog alertDialog = ab.create();
+                        alertDialog.show();
+                    }
+                });
+                holder.setItemClickListener(new ItemClickListener() {
+                    @Override
+                    public void onClick(View view, int position, boolean isLongClick) {
+                        if (isLongClick) {
+                            Toast.makeText(MainActivity.this, "Long Click: " + model.getName(), Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(MainActivity.this, "Short Click: " + model.getHost(), Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+            }
+        };
+
+        nav_rcvListGroup.setAdapter(adapterabc);
+
         FirebaseUser mUser = mAuth.getCurrentUser();
         if (mUser != null) {
             myRef.child("Users/" + mUser.getUid()).addValueEventListener(new ValueEventListener() {
