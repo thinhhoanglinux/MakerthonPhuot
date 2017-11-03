@@ -11,10 +11,10 @@
     tools:openDrawer="start">
 
     <LinearLayout
-        android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:fitsSystemWindows="true">
+        android:fitsSystemWindows="true"
+        android:orientation="vertical">
 
         <android.support.v7.widget.Toolbar
             android:id="@+id/toolbar"
@@ -72,11 +72,42 @@
                 android:textColor="@android:color/white"
                 android:textSize="14sp" />
 
-            <android.support.v7.widget.RecyclerView
-                android:id="@+id/nav_rcvListGroup"
+            <LinearLayout
+                android:id="@+id/linearButton"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_below="@id/nav_email" />
+                android:layout_below="@id/nav_email"
+                android:orientation="vertical">
+                <android.support.v7.widget.RecyclerView
+                    android:layout_marginTop="10dp"
+                    android:layout_weight="1"
+                    android:id="@+id/nav_rcvListGroup"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"/>
+                <LinearLayout
+                    android:layout_marginTop="10dp"
+                    android:orientation="horizontal"
+                    android:weightSum="2"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp">
+                    <Button
+                        android:textColor="@android:color/white"
+                        android:text="@string/create"
+                        android:background="@android:color/holo_red_light"
+                        android:id="@+id/nav_btnCreate"
+                        android:layout_weight="1"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content" />
+                    <Button
+                        android:textColor="@android:color/white"
+                        android:text="@string/join"
+                        android:background="@android:color/holo_blue_light"
+                        android:id="@+id/nav_btnJoin"
+                        android:layout_weight="1"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content" />
+                </LinearLayout>
+            </LinearLayout>
         </RelativeLayout>
 
     </android.support.design.widget.NavigationView>

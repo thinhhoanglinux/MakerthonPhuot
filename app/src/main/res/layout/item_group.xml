@@ -60,16 +60,6 @@
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="30dp" />
-            <Button
-                android:id="@+id/btnEdit"
-                android:foreground="?android:attr/selectableItemBackground"
-                android:textStyle="bold"
-                android:text="@string/edit"
-                android:textColor="@android:color/white"
-                android:background="@android:color/holo_blue_light"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="30dp" />
         </LinearLayout>
     </LinearLayout>
 </android.support.v7.widget.CardView>

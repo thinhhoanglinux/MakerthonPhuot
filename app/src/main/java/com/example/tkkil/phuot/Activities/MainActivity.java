@@ -40,6 +40,7 @@ import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.tkkil.phuot.Adapter.GroupAdapter;
 import com.example.tkkil.phuot.Interface.ItemClickListener;
 import com.example.tkkil.phuot.Models.Group;
 import com.example.tkkil.phuot.Models.User;
@@ -56,6 +57,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -89,7 +91,7 @@ import de.hdodenhof.circleimageview.CircleImageView;
 import es.dmoral.toasty.Toasty;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener, LocationListener {
+        GoogleApiClient.OnConnectionFailedListener, LocationListener, View.OnClickListener {
 
     private static final int REQUEST_LOCATION_CODE = 99;
     private GoogleMap mMap;
@@ -108,25 +110,27 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Uri filepath;
     Bitmap bitmap;
     RecyclerView nav_rcvListGroup;
-    //Dialog
-    EditText edtNameGroup, edtPwdGroup;
     //Header-Nav
     private CircleImageView nav_avatar;
     private TextView nav_name, nav_email;
     //Dialog avatar
     private CircleImageView dialog_avatar;
     private User user;
-    FirebaseRecyclerAdapter adapterabc;
-    ArrayList<String> keys;
+    //    FirebaseRecyclerAdapter adapterabc;
+    Button nav_btnCreate, nav_btnJoin;
+
+    ArrayList<Group> groups;
+    GroupAdapter adapter_group;
+
+    FirebaseRecyclerAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             checkLocationPermisstion();
         }
-        initGoogleMap();
         mStorage = FirebaseStorage.getInstance().getReference();
         mAuth = FirebaseAuth.getInstance();
         myRef = FirebaseDatabase.getInstance().getReference();
@@ -134,24 +138,25 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         loading.setTitle("LOADING");
         loading.setMessage("Please wait...");
 
+        
         init();
         initToolbar();
     }
 
     private boolean checkLocationPermisstion() {
-        if(ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) !=
-                PackageManager.PERMISSION_GRANTED){
-            if(ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)){
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) !=
+                PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION_CODE);
-            }else {
+            } else {
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION_CODE);
             }
             return false;
-        }else
-            return  true;
+        } else
+            return true;
     }
 
-    protected synchronized void buildGoogleApiClient(){
+    protected synchronized void buildGoogleApiClient() {
         mClient = new GoogleApiClient.Builder(this)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
@@ -164,28 +169,28 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     protected void onStart() {
         super.onStart();
-        adapterabc.startListening();
+        adapter.startListening();
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        adapterabc.stopListening();
+        adapter.stopListening();
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        switch (requestCode){
+        switch (requestCode) {
             case REQUEST_LOCATION_CODE:
-                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
-                    if(ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) ==
-                            PackageManager.PERMISSION_GRANTED){
-                        if(mClient == null){
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) ==
+                            PackageManager.PERMISSION_GRANTED) {
+                        if (mClient == null) {
                             buildGoogleApiClient();
                         }
                         mMap.setMyLocationEnabled(true);
                     }
-                }else {
+                } else {
                     Toast.makeText(this, "Permission denied!", Toast.LENGTH_SHORT).show();
                 }
         }
@@ -198,8 +203,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mLocationRequest.setFastestInterval(1000);
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
-        if(ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) ==
-                PackageManager.PERMISSION_GRANTED){
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) ==
+                PackageManager.PERMISSION_GRANTED) {
             LocationServices.FusedLocationApi.requestLocationUpdates(mClient, mLocationRequest, this);
         }
 
@@ -219,7 +224,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onLocationChanged(Location location) {
         mLastLocation = location;
 
-        if(mCurrentLocationMarker != null){
+        if (mCurrentLocationMarker != null) {
             mCurrentLocationMarker.remove();
         }
 
@@ -227,14 +232,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         MarkerOptions markerOptions = new MarkerOptions();
         markerOptions.position(latLng);
         markerOptions.title("Current Location");
-        markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
+        markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
 
         mCurrentLocationMarker = mMap.addMarker(markerOptions);
-
+/*
         mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
-        mMap.animateCamera(CameraUpdateFactory.zoomBy(10));
+        mMap.animateCamera(CameraUpdateFactory.zoomBy(10));*/
 
-        if(mClient !=null){
+        CameraPosition cameraPosition = new CameraPosition.Builder().target(latLng).zoom(15).build();
+        mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+
+        if (mClient != null) {
             LocationServices.FusedLocationApi.removeLocationUpdates(mClient, this);
         }
     }
@@ -242,21 +250,36 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        if(ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) ==
-                PackageManager.PERMISSION_GRANTED){
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) ==
+                PackageManager.PERMISSION_GRANTED) {
             buildGoogleApiClient();
             mMap.setMyLocationEnabled(true);
         }
+        Toast.makeText(this, "asd", Toast.LENGTH_SHORT).show();
     }
 
-    private void initGoogleMap(){
+    private void initGoogleMap() {
         MapFragment mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.fragment);
         mapFragment.getMapAsync(this);
     }
 
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()) {
+            case R.id.nav_btnCreate:
+                addGroupDialog();
+                break;
+            case R.id.nav_btnJoin:
+                onJoin();
+                break;
+            default:
+                break;
+        }
+    }
+
     public static class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
         TextView txtvNameGroup, txtvQuantity, txtvFullname;
-        Button btnDelete, btnEdit;
+        Button btnDelete;
         ItemClickListener itemClickListener;
 
         ViewHolder(View itemView) {
@@ -265,7 +288,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             txtvQuantity = itemView.findViewById(R.id.txtvQuantity);
             txtvFullname = itemView.findViewById(R.id.txtvFullname);
             btnDelete = itemView.findViewById(R.id.btnDelete);
-            btnEdit = itemView.findViewById(R.id.btnEdit);
             itemView.setOnClickListener(this);
             itemView.setOnLongClickListener(this);
         }
@@ -320,9 +342,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.action_add_group:
-                addGroupDialog();
-                break;
             case R.id.action_change_info:
                 startActivity(new Intent(MainActivity.this, ChangeInformationActivity.class));
                 break;
@@ -370,24 +389,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-    private boolean Validate() {
-        boolean isValidate = true;
-        if (TextUtils.isEmpty(edtNameGroup.getText().toString().trim())) {
-            edtNameGroup.setError("Please enter Name!");
-            isValidate = false;
-        }
-        if (TextUtils.isEmpty(edtPwdGroup.getText().toString().trim())) {
-            edtPwdGroup.setError("Please enter Password!");
-            isValidate = false;
-        } else {
-            if (edtPwdGroup.getText().toString().trim().length() < 6) {
-                edtPwdGroup.setError("Password is too short!");
-                isValidate = false;
-            }
-        }
-        return isValidate;
-    }
-
     private void addGroupDialog() {
         AlertDialog.Builder ab = new AlertDialog.Builder(MainActivity.this, R.style.MyDialogTheme);
         @SuppressLint("InflateParams")
@@ -397,8 +398,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         ab.setPositiveButton("CREATE", null);
         ab.setNegativeButton("CANCEL", null);
 
-        edtNameGroup = view.findViewById(R.id.edtNameGroup);
-        edtPwdGroup = view.findViewById(R.id.edtPwdGroup);
+        final EditText edtNameGroup = view.findViewById(R.id.edtNameGroup);
+        final EditText edtPwdGroup = view.findViewById(R.id.edtPwdGroup);
+
+        TextView txtvTitle = view.findViewById(R.id.txtvTitle);
+        txtvTitle.setText("ADD NEW GROUP");
 
         final AlertDialog dialog = ab.create();
 
@@ -411,34 +415,55 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     @SuppressLint("SimpleDateFormat")
                     @Override
                     public void onClick(View view) {
-                        if (!Validate()) {
+                        if (TextUtils.isEmpty(edtNameGroup.getText().toString().trim())) {
+                            edtNameGroup.setError("Please enter Name!");
                             return;
                         }
-                        dialog.dismiss();
-                        Snackbar.make(myDrawer, "Success", Snackbar.LENGTH_SHORT).show();
-                        Group group = new Group();
-                        FirebaseUser mUser = mAuth.getCurrentUser();
-                        if (mUser != null) {
-                            group.setHost(mUser.getUid());
-                            group.setName(edtNameGroup.getText().toString().trim());
-                            group.setPass(edtPwdGroup.getText().toString().trim());
-                            group.setTime(new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(Calendar.getInstance().getTime()));
-                            myRef.child("Groups").push().setValue(group)
-                                    .addOnCompleteListener(new OnCompleteListener<Void>() {
-                                        @Override
-                                        public void onComplete(@NonNull Task<Void> task) {
-                                            if (task.isSuccessful()) {
-                                                Snackbar.make(myDrawer, "Success", Snackbar.LENGTH_SHORT).show();
-                                            }
-                                        }
-                                    })
-                                    .addOnFailureListener(new OnFailureListener() {
-                                        @Override
-                                        public void onFailure(@NonNull Exception e) {
-                                            Snackbar.make(myDrawer, "Error: " + e.getMessage(), Snackbar.LENGTH_SHORT).show();
-                                        }
-                                    });
+                        if (TextUtils.isEmpty(edtPwdGroup.getText().toString().trim())) {
+                            edtPwdGroup.setError("Please enter Password!");
+                            return;
+                        } else {
+                            if (edtPwdGroup.getText().toString().trim().length() < 6) {
+                                edtPwdGroup.setError("Password is too short!");
+                                return;
+                            }
                         }
+                        myRef.child("Groups").addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(DataSnapshot dataSnapshot) {
+                                if (dataSnapshot.hasChild(edtNameGroup.getText().toString().trim())) {
+                                    Toast.makeText(MainActivity.this, "Can't create, group name is existed!", Toast.LENGTH_SHORT).show();
+                                } else {
+                                    final Group group = new Group();
+                                    group.setName(edtNameGroup.getText().toString().trim());
+                                    group.setHost(mAuth.getCurrentUser().getUid());
+                                    group.setPass(edtPwdGroup.getText().toString().trim());
+                                    group.setTime(new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(Calendar.getInstance().getTime()));
+                                    myRef.child("Groups").child(edtNameGroup.getText().toString().trim()).setValue(group)
+                                            .addOnCompleteListener(new OnCompleteListener<Void>() {
+                                                @Override
+                                                public void onComplete(@NonNull Task<Void> task) {
+                                                    if (task.isSuccessful()) {
+                                                        myRef.child("Groups").child(edtNameGroup.getText().toString().trim()).child("members").child(mAuth.getCurrentUser().getUid()).setValue(mCurrentLocationMarker.getPosition().latitude+" "+mCurrentLocationMarker.getPosition().longitude);
+                                                        Snackbar.make(myDrawer, "Success", Snackbar.LENGTH_SHORT).show();
+                                                        dialog.dismiss();
+                                                    }
+                                                }
+                                            })
+                                            .addOnFailureListener(new OnFailureListener() {
+                                                @Override
+                                                public void onFailure(@NonNull Exception e) {
+                                                    Snackbar.make(myDrawer, "Error: " + e.getMessage(), Snackbar.LENGTH_SHORT).show();
+                                                }
+                                            });
+                                }
+                            }
+
+                            @Override
+                            public void onCancelled(DatabaseError databaseError) {
+
+                            }
+                        });
                     }
                 });
             }
@@ -466,7 +491,86 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         return result;
     }
 
+    private void onJoin() {
+        AlertDialog.Builder ab = new AlertDialog.Builder(this, R.style.MyDialogTheme);
+        View view = LayoutInflater.from(this).inflate(R.layout.dialog_add_new_group, null);
+        ab.setView(view);
+        //Init
+        TextView txtvTitle = view.findViewById(R.id.txtvTitle);
+        final EditText edtNameGroup = view.findViewById(R.id.edtNameGroup);
+        final EditText edtPwdGroup = view.findViewById(R.id.edtPwdGroup);
+
+        txtvTitle.setText("JOIN GROUP");
+        ab.setPositiveButton("JOIN", null);
+        ab.setNegativeButton("CANCEL", null);
+        final AlertDialog alertDialog = ab.create();
+        alertDialog.setOnShowListener(new DialogInterface.OnShowListener() {
+            @Override
+            public void onShow(DialogInterface dialogInterface) {
+                alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getResources().getColor(R.color.colorPrimary));
+                Button Positive = alertDialog.getButton(AlertDialog.BUTTON_POSITIVE);
+                Positive.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        if (TextUtils.isEmpty(edtNameGroup.getText().toString().trim())) {
+                            edtNameGroup.setError("Please enter Name!");
+                            return;
+                        }
+                        if (TextUtils.isEmpty(edtPwdGroup.getText().toString().trim())) {
+                            edtPwdGroup.setError("Please enter Password!");
+                            return;
+                        } else {
+                            if (edtPwdGroup.getText().toString().trim().length() < 6) {
+                                edtPwdGroup.setError("Password is too short!");
+                                return;
+                            }
+                        }
+                        myRef.child("Groups").addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(DataSnapshot dataSnapshot) {
+                                if (dataSnapshot.hasChild(edtNameGroup.getText().toString().trim())) {
+                                    myRef.child("Groups").child(edtNameGroup.getText().toString().trim()).child("members").child(mAuth.getCurrentUser().getUid()).setValue(mCurrentLocationMarker.getPosition().latitude + " " + mCurrentLocationMarker.getPosition().longitude);
+                                    /*myRef.child("Groups").child(edtNameGroup.getText().toString().trim()).addValueEventListener(new ValueEventListener() {
+                                        @Override
+                                        public void onDataChange(DataSnapshot dataSnapshot) {
+                                            Group group = dataSnapshot.getValue(Group.class);
+                                            groups.add(group);
+                                            adapter_group.notifyDataSetChanged();
+                                        }
+
+                                        @Override
+                                        public void onCancelled(DatabaseError databaseError) {
+
+                                        }
+                                    });*/
+                                } else {
+                                    Toast.makeText(MainActivity.this, "Group is not exists!", Toast.LENGTH_SHORT).show();
+                                }
+                            }
+
+                            @Override
+                            public void onCancelled(DatabaseError databaseError) {
+
+                            }
+                        });
+
+
+                        alertDialog.dismiss();
+                    }
+                });
+            }
+        });
+        alertDialog.show();
+    }
+
     private void init() {
+        initGoogleMap();
+
+        nav_btnCreate = findViewById(R.id.nav_btnCreate);
+        nav_btnJoin = findViewById(R.id.nav_btnJoin);
+        nav_btnCreate.setOnClickListener(this);
+        nav_btnJoin.setOnClickListener(this);
+
         myNav = findViewById(R.id.myNav);
         myNav.setPadding(0, onGetHeightStatus(), 0, 0);
 
@@ -474,77 +578,61 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         nav_name = findViewById(R.id.nav_name);
         nav_email = findViewById(R.id.nav_email);
 
-        keys = new ArrayList<>();
-        myRef.child("Groups").addChildEventListener(new ChildEventListener() {
-            @Override
-            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                s = dataSnapshot.getKey();
-                keys.add(s);
-            }
+        nav_rcvListGroup = findViewById(R.id.nav_rcvListGroup);
+        nav_rcvListGroup.setHasFixedSize(true);
+        nav_rcvListGroup.setLayoutManager(new LinearLayoutManager(this));
 
-            @Override
-            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+        Query query = myRef.child("Groups")
+                .orderByChild("members/"+mAuth.getCurrentUser().getUid())
+                .startAt("");
+        FirebaseRecyclerOptions<Group> options = new FirebaseRecyclerOptions.Builder<Group>()
+                .setQuery(query, Group.class)
+                .build();
 
-            }
-
-            @Override
-            public void onChildRemoved(DataSnapshot dataSnapshot) {
-
-            }
-
-            @Override
-            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
-
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
-
-        //Recycler
-        /*rcvListGroup = findViewById(R.id.rcvListGroup);
-        rcvListGroup.setHasFixedSize(true);
-        rcvListGroup.setLayoutManager(new LinearLayoutManager(this));
-        Query query = myRef.child("Groups");
-        FirebaseRecyclerOptions<Group> options = new FirebaseRecyclerOptions.Builder<Group>().setQuery(query, Group.class).build();
-        adapterabc = new FirebaseRecyclerAdapter<Group, ViewHolder>(options) {
+        adapter = new FirebaseRecyclerAdapter<Group,ViewHolder>(options) {
 
             @Override
             public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-                View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_group, parent, false);
+                View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_group,parent,false);
                 return new ViewHolder(view);
             }
 
             @Override
-            protected void onBindViewHolder(ViewHolder holder, final int position, final Group model) {
-                holder.txtvName.setText(model.getName());
-                holder.txtvTime.setText(model.getTime());
+            protected void onBindViewHolder(final ViewHolder holder, int position, final Group model) {
+                holder.txtvNameGroup.setText(model.getName());
 
-                holder.btnDetail.setOnClickListener(new View.OnClickListener() {
+                holder.setItemClickListener(new ItemClickListener() {
                     @Override
-                    public void onClick(View view) {
-                        myRef.child("Users").child(model.getHost()).addValueEventListener(new ValueEventListener() {
+                    public void onClick(View view, int position, boolean isLongClick) {
+                        myRef.child("Groups/"+model.getName()+"/members/").addChildEventListener(new ChildEventListener() {
                             @Override
-                            public void onDataChange(DataSnapshot dataSnapshot) {
-                                User user = dataSnapshot.getValue(User.class);
-                                if (user != null) {
-                                    AlertDialog.Builder ab = new AlertDialog.Builder(MainActivity.this);
-                                    ab.setTitle("INFORMATION");
-                                    View dialog_info_host_view = LayoutInflater.from(MainActivity.this).inflate(R.layout.dialog_info_host, null);
-                                    ab.setView(dialog_info_host_view);
-                                    TextView txtvName = dialog_info_host_view.findViewById(R.id.txtvFullname);
-                                    TextView txtvBirthday = dialog_info_host_view.findViewById(R.id.txtvBirthday);
-                                    TextView txtvPhone = dialog_info_host_view.findViewById(R.id.txtvPhone);
-                                    TextView txtvEmail = dialog_info_host_view.findViewById(R.id.txtvEmail);
-                                    txtvName.setText(user.getFullname());
-                                    txtvBirthday.setText(user.getBirthday());
-                                    txtvPhone.setText(user.getPhone());
-                                    txtvEmail.setText(user.getEmail());
-                                    AlertDialog alertDialog = ab.create();
-                                    alertDialog.show();
+                            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                                if(dataSnapshot.getKey().contains(mAuth.getCurrentUser().getUid())){
+
+                                }else{
+                                    Toast.makeText(MainActivity.this, ""+dataSnapshot.getKey(), Toast.LENGTH_SHORT).show();
+                                    String[] a = dataSnapshot.getValue().toString().split(" ");
+                                    Double lat = Double.parseDouble(a[0]);
+                                    Double lng = Double.parseDouble(a[1]);
+                                    MarkerOptions markerOptions = new MarkerOptions();
+                                    markerOptions.position(new LatLng(lat,lng));
+                                    mMap.addMarker(markerOptions);
                                 }
+                            }
+
+                            @Override
+                            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+
+                            }
+
+                            @Override
+                            public void onChildRemoved(DataSnapshot dataSnapshot) {
+
+                            }
+
+                            @Override
+                            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
                             }
 
                             @Override
@@ -554,83 +642,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         });
                     }
                 });
-                holder.btnJoin.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        if (mAuth.getCurrentUser().getUid().equalsIgnoreCase(model.getHost())) {
-                            Toast.makeText(MainActivity.this, "Can't join!", Toast.LENGTH_SHORT).show();
-                        } else {
-                            AlertDialog.Builder ab = new AlertDialog.Builder(MainActivity.this, R.style.MyDialogTheme);
-                            ab.setTitle("JOIN GROUP");
-                            View dialog_join_group_view = LayoutInflater.from(MainActivity.this).inflate(R.layout.dialog_join_group, null);
-                            ab.setView(dialog_join_group_view);
-                            final EditText edtPwdGroup = dialog_join_group_view.findViewById(R.id.edtPwdGroup);
-                            ab.setPositiveButton("JOIN", null);
-                            ab.setNegativeButton("CANCEL", null);
-                            final AlertDialog alertDialog = ab.create();
-                            alertDialog.setOnShowListener(new DialogInterface.OnShowListener() {
-                                @Override
-                                public void onShow(DialogInterface dialogInterface) {
-                                    alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getResources().getColor(R.color.colorPrimary));
-                                    Button Positive = alertDialog.getButton(AlertDialog.BUTTON_POSITIVE);
-                                    Positive.setOnClickListener(new View.OnClickListener() {
-                                        @Override
-                                        public void onClick(View view) {
-                                            if (TextUtils.isEmpty(edtPwdGroup.getText().toString().trim())) {
-                                                edtPwdGroup.setError("Please enter Password!");
-                                                return;
-                                            }
-                                            myRef.child("Groups").child(keys.get(position)).child("pass").addValueEventListener(new ValueEventListener() {
-                                                @Override
-                                                public void onDataChange(DataSnapshot dataSnapshot) {
-                                                    if (dataSnapshot.getValue(String.class).equalsIgnoreCase(edtPwdGroup.getText().toString().trim())) {
-                                                        myRef.child("Groups").child(keys.get(position)).child("members").child(mAuth.getCurrentUser().getUid()).setValue("Joined");
-                                                        alertDialog.dismiss();
-                                                    } else {
-                                                        Toast.makeText(MainActivity.this, "Wrong, can't join!", Toast.LENGTH_SHORT).show();
-                                                    }
-                                                }
 
-                                                @Override
-                                                public void onCancelled(DatabaseError databaseError) {
-
-                                                }
-                                            });
-                                        }
-                                    });
-                                }
-                            });
-                            alertDialog.setCanceledOnTouchOutside(false);
-                            alertDialog.show();
-
-                        }
-                    }
-                });
-            }
-        };
-        rcvListGroup.setAdapter(adapterabc);*/
-
-        nav_rcvListGroup = findViewById(R.id.nav_rcvListGroup);
-        nav_rcvListGroup.setHasFixedSize(true);
-        nav_rcvListGroup.setLayoutManager(new LinearLayoutManager(this));
-
-        Query query = myRef.child("Groups").orderByChild("host").startAt(mAuth.getCurrentUser().getUid()).endAt(mAuth.getCurrentUser().getUid());
-        FirebaseRecyclerOptions<Group> options = new FirebaseRecyclerOptions.Builder<Group>().setQuery(query, Group.class).build();
-        adapterabc = new FirebaseRecyclerAdapter<Group, ViewHolder>(options) {
-
-            @Override
-            public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-                View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_group, parent, false);
-                return new ViewHolder(view);
-            }
-
-            @Override
-            protected void onBindViewHolder(final ViewHolder holder, final int position, final Group model) {
-                holder.txtvNameGroup.setText(model.getName());
                 myRef.child("Users").child(model.getHost()).child("fullname").addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
-                        holder.txtvFullname.setText(dataSnapshot.getValue(String.class));
+                        holder.txtvFullname.setText(dataSnapshot.getValue().toString());
                     }
 
                     @Override
@@ -638,37 +654,56 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                     }
                 });
-                holder.btnDelete.setOnClickListener(new View.OnClickListener() {
+
+                myRef.child("Groups").child(model.getName()).child("host").addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
-                    public void onClick(View view) {
-                        AlertDialog.Builder ab = new AlertDialog.Builder(MainActivity.this, R.style.MyDialogTheme);
-                        ab.setTitle("DELETE");
-                        ab.setPositiveButton("YES", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialogInterface, int i) {
-                                myRef.child("Groups").child(keys.get(position)).removeValue();
-                            }
-                        });
-                        ab.setNegativeButton("NO", null);
-                        AlertDialog alertDialog = ab.create();
-                        alertDialog.show();
-                    }
-                });
-                holder.setItemClickListener(new ItemClickListener() {
-                    @Override
-                    public void onClick(View view, int position, boolean isLongClick) {
-                        if (isLongClick) {
-                            Toast.makeText(MainActivity.this, "Long Click: " + model.getName(), Toast.LENGTH_SHORT).show();
-                        } else {
-                            Toast.makeText(MainActivity.this, "Short Click: " + model.getHost(), Toast.LENGTH_SHORT).show();
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        if(dataSnapshot.getValue().toString().contains(mAuth.getCurrentUser().getUid())){
+                            holder.btnDelete.setText("DELETE");
+                            holder.btnDelete.setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View view) {
+
+                                    myRef.child("Groups").child(model.getName()).removeValue().addOnCompleteListener(new OnCompleteListener<Void>() {
+                                        @Override
+                                        public void onComplete(@NonNull Task<Void> task) {
+                                            if(task.isSuccessful()){
+                                                Toast.makeText(MainActivity.this, "Deleted!", Toast.LENGTH_SHORT).show();
+                                            }
+                                        }
+                                    });
+                                }
+                            });
+                        }else{
+                            holder.btnDelete.setText("QUIT");
+                            holder.btnDelete.setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View view) {
+
+                                    myRef.child("Groups/"+model.getName()+"/members/"+mAuth.getCurrentUser().getUid()).removeValue().addOnCompleteListener(new OnCompleteListener<Void>() {
+                                        @Override
+                                        public void onComplete(@NonNull Task<Void> task) {
+                                            if(task.isSuccessful()){
+                                                Toast.makeText(MainActivity.this, "Quited!", Toast.LENGTH_SHORT).show();
+                                            }
+                                        }
+                                    });
+                                }
+                            });
                         }
                     }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
                 });
+
+
+
             }
         };
-
-        nav_rcvListGroup.setAdapter(adapterabc);
-
+        nav_rcvListGroup.setAdapter(adapter);
         FirebaseUser mUser = mAuth.getCurrentUser();
         if (mUser != null) {
             myRef.child("Users/" + mUser.getUid()).addValueEventListener(new ValueEventListener() {
@@ -691,7 +726,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     }
 
                 }
-
                 @Override
                 public void onCancelled(DatabaseError databaseError) {
 

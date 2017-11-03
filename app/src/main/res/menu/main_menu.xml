@@ -2,11 +2,6 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
-        android:id="@+id/action_add_group"
-        android:icon="@drawable/ic_group_add_white_24dp"
-        android:title="@string/add_group"
-        app:showAsAction="ifRoom" />
-    <item
         app:showAsAction="always"
         android:icon="@drawable/ic_more_vert_white_24dp"
         android:title="@string/more">
