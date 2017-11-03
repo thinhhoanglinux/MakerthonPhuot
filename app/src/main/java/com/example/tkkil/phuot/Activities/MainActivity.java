@@ -96,7 +96,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private static final int REQUEST_LOCATION_CODE = 99;
     private GoogleMap mMap;
     private GoogleApiClient mClient;
-    private LocationRequest mLocationRequest;
+    private LocationRequest locationRequest;
     private Location mLastLocation;
     private Marker mCurrentLocationMarker;
 
@@ -125,6 +125,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     FirebaseRecyclerAdapter adapter;
 
     Toolbar toolbar;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -139,7 +140,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         loading.setTitle("LOADING");
         loading.setMessage("Please wait...");
 
-        
+
         init();
         initToolbar();
     }
@@ -199,7 +200,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-        mLocationRequest = new LocationRequest();
+        /*mLocationRequest = new LocationRequest();
         mLocationRequest.setInterval(1000);
         mLocationRequest.setFastestInterval(1000);
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
@@ -207,7 +208,22 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) ==
                 PackageManager.PERMISSION_GRANTED) {
             LocationServices.FusedLocationApi.requestLocationUpdates(mClient, mLocationRequest, this);
+        }*/
+
+        locationRequest = LocationRequest.create();
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        locationRequest.setInterval(1000);
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
         }
+        LocationServices.FusedLocationApi.requestLocationUpdates(mClient, locationRequest, this);
 
     }
 
@@ -224,8 +240,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onLocationChanged(Location location) {
         mLastLocation = location;
+
+        Double curLat = location.getLatitude();
+        Double curLong = location.getLongitude();
+
         if(toolbar.getSubtitle()!=null){
-            myRef.child("Groups/"+toolbar.getSubtitle()+"/members/"+mAuth.getCurrentUser().getUid()).setValue(location.getLatitude()+" "+location.getLongitude());
+            myRef.child("Groups/"+toolbar.getSubtitle()+"/members/").child(mAuth.getCurrentUser().getUid()).setValue(curLat+" " +curLong);
         }
 
         if (mCurrentLocationMarker != null) {
@@ -240,9 +260,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         mCurrentLocationMarker = mMap.addMarker(markerOptions);
 
-/*
+
         mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
-        mMap.animateCamera(CameraUpdateFactory.zoomBy(10));*/
+        mMap.animateCamera(CameraUpdateFactory.zoomBy(10));
 
         CameraPosition cameraPosition = new CameraPosition.Builder().target(latLng).zoom(15).build();
         mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
@@ -449,7 +469,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                                 @Override
                                                 public void onComplete(@NonNull Task<Void> task) {
                                                     if (task.isSuccessful()) {
-                                                        myRef.child("Groups").child(edtNameGroup.getText().toString().trim()).child("members").child(mAuth.getCurrentUser().getUid()).setValue(mCurrentLocationMarker.getPosition().latitude+" "+mCurrentLocationMarker.getPosition().longitude);
+                                                        myRef.child("Groups").child(edtNameGroup.getText().toString().trim()).child("members").child(mAuth.getCurrentUser().getUid()).setValue(mCurrentLocationMarker.getPosition().latitude + " " + mCurrentLocationMarker.getPosition().longitude);
                                                         Snackbar.make(myDrawer, "Success", Snackbar.LENGTH_SHORT).show();
                                                         dialog.dismiss();
                                                     }
@@ -588,17 +608,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         nav_rcvListGroup.setLayoutManager(new LinearLayoutManager(this));
 
         Query query = myRef.child("Groups")
-                .orderByChild("members/"+mAuth.getCurrentUser().getUid())
+                .orderByChild("members/" + mAuth.getCurrentUser().getUid())
                 .startAt("");
         FirebaseRecyclerOptions<Group> options = new FirebaseRecyclerOptions.Builder<Group>()
                 .setQuery(query, Group.class)
                 .build();
 
-        adapter = new FirebaseRecyclerAdapter<Group,ViewHolder>(options) {
+        adapter = new FirebaseRecyclerAdapter<Group, ViewHolder>(options) {
 
             @Override
             public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-                View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_group,parent,false);
+                View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_group, parent, false);
                 return new ViewHolder(view);
             }
 
@@ -610,18 +630,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     @Override
                     public void onClick(View view, int position, boolean isLongClick) {
                         toolbar.setSubtitle(model.getName());
-                        myRef.child("Groups/"+model.getName()+"/members/").addChildEventListener(new ChildEventListener() {
+                        myRef.child("Groups/" + model.getName() + "/members/").addChildEventListener(new ChildEventListener() {
                             @Override
                             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                                if(dataSnapshot.getKey().contains(mAuth.getCurrentUser().getUid())){
+                                if (dataSnapshot.getKey().contains(mAuth.getCurrentUser().getUid())) {
 
-                                }else{
-//                                    Toast.makeText(MainActivity.this, ""+dataSnapshot.getKey(), Toast.LENGTH_SHORT).show();
+                                } else {
                                     String[] a = dataSnapshot.getValue().toString().split(" ");
                                     Double lat = Double.parseDouble(a[0]);
                                     Double lng = Double.parseDouble(a[1]);
                                     MarkerOptions markerOptions = new MarkerOptions();
-                                    markerOptions.position(new LatLng(lat,lng));
+                                    markerOptions.position(new LatLng(lat, lng));
                                     mMap.addMarker(markerOptions);
 //                                    myRef.child("Groups/"+model.getName()+"/members/"+mAuth.getCurrentUser().getUid()).setValue(mCurrentLocationMarker.getPosition().latitude+" " +mCurrentLocationMarker.getPosition().longitude);
 
@@ -667,7 +686,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 myRef.child("Groups").child(model.getName()).child("host").addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
-                        if(dataSnapshot.getValue().toString().contains(mAuth.getCurrentUser().getUid())){
+                        if (dataSnapshot.getValue().toString().contains(mAuth.getCurrentUser().getUid())) {
                             holder.btnDelete.setText("DELETE");
                             holder.btnDelete.setOnClickListener(new View.OnClickListener() {
                                 @Override
@@ -676,23 +695,23 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                     myRef.child("Groups").child(model.getName()).removeValue().addOnCompleteListener(new OnCompleteListener<Void>() {
                                         @Override
                                         public void onComplete(@NonNull Task<Void> task) {
-                                            if(task.isSuccessful()){
+                                            if (task.isSuccessful()) {
                                                 Toast.makeText(MainActivity.this, "Deleted!", Toast.LENGTH_SHORT).show();
                                             }
                                         }
                                     });
                                 }
                             });
-                        }else{
+                        } else {
                             holder.btnDelete.setText("QUIT");
                             holder.btnDelete.setOnClickListener(new View.OnClickListener() {
                                 @Override
                                 public void onClick(View view) {
 
-                                    myRef.child("Groups/"+model.getName()+"/members/"+mAuth.getCurrentUser().getUid()).removeValue().addOnCompleteListener(new OnCompleteListener<Void>() {
+                                    myRef.child("Groups/" + model.getName() + "/members/" + mAuth.getCurrentUser().getUid()).removeValue().addOnCompleteListener(new OnCompleteListener<Void>() {
                                         @Override
                                         public void onComplete(@NonNull Task<Void> task) {
-                                            if(task.isSuccessful()){
+                                            if (task.isSuccessful()) {
                                                 Toast.makeText(MainActivity.this, "Quited!", Toast.LENGTH_SHORT).show();
                                             }
                                         }
@@ -707,7 +726,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                     }
                 });
-
 
 
             }
@@ -735,6 +753,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     }
 
                 }
+
                 @Override
                 public void onCancelled(DatabaseError databaseError) {
 
