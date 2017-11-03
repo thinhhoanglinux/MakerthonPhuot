@@ -245,14 +245,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         Double curLong = location.getLongitude();
 
         if(toolbar.getSubtitle()!=null){
-            myRef.child("Groups/"+toolbar.getSubtitle()+"/members/").child(mAuth.getCurrentUser().getUid()).setValue(curLat+" " +curLong);
+            myRef.child("Groups/bbbbbb/members").child(mAuth.getCurrentUser().getUid()).setValue(curLat+" " +curLong);
         }
 
         if (mCurrentLocationMarker != null) {
             mCurrentLocationMarker.remove();
         }
 
-        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+        LatLng latLng = new LatLng(curLat,curLong);
         MarkerOptions markerOptions = new MarkerOptions();
         markerOptions.position(latLng);
         markerOptions.title("Current Location");
@@ -263,13 +263,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
         mMap.animateCamera(CameraUpdateFactory.zoomBy(10));
-
+//
         CameraPosition cameraPosition = new CameraPosition.Builder().target(latLng).zoom(15).build();
         mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
 
-        if (mClient != null) {
-            LocationServices.FusedLocationApi.removeLocationUpdates(mClient, this);
-        }
+//        if (mClient != null) {
+//            LocationServices.FusedLocationApi.removeLocationUpdates(mClient, this);
+//        }
     }
 
     @Override
