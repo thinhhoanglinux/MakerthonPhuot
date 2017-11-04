@@ -29,7 +29,7 @@ public class ChangeInformationActivity extends AppCompatActivity {
     User userRoot;
     private FirebaseAuth mAuth;
     private DatabaseReference myRef;
-    private EditText edtFullname, edtBirthday, edtPhone, edtAddress, edtUser;
+    private EditText edtFullname, edtBirthday, edtPhone, edtAddress;
     private RelativeLayout main;
 
     @Override
@@ -47,7 +47,6 @@ public class ChangeInformationActivity extends AppCompatActivity {
                 public void onDataChange(DataSnapshot dataSnapshot) {
                     userRoot = dataSnapshot.getValue(User.class);
                     if (userRoot != null) {
-                        edtUser.setText(userRoot.getUsername());
                         edtFullname.setText(userRoot.getFullname());
                         edtBirthday.setText(userRoot.getBirthday());
                         edtPhone.setText(userRoot.getPhone());
@@ -65,7 +64,6 @@ public class ChangeInformationActivity extends AppCompatActivity {
 
     private void init() {
         main = findViewById(R.id.main);
-        edtUser = findViewById(R.id.edtUser);
         edtFullname = findViewById(R.id.edtFullname);
         edtBirthday = findViewById(R.id.edtBirthday);
         edtPhone = findViewById(R.id.edtPhone);
@@ -91,7 +89,6 @@ public class ChangeInformationActivity extends AppCompatActivity {
             user.setBirthday(edtBirthday.getText().toString().trim());
             user.setPhone(edtPhone.getText().toString().trim());
             user.setAddress(edtAddress.getText().toString().trim());
-            user.setUsername(edtUser.getText().toString().trim());
             user.setEmail(mUser.getEmail());
             user.setUid(mUser.getUid());
             user.setAvatar(userRoot.getAvatar());

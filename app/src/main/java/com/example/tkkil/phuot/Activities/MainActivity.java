@@ -42,6 +42,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.tkkil.phuot.Adapter.GroupAdapter;
+import com.example.tkkil.phuot.Folder.DirectionData;
+import com.example.tkkil.phuot.Folder.GetNearbyPlaces;
 import com.example.tkkil.phuot.Interface.ItemClickListener;
 import com.example.tkkil.phuot.Models.Group;
 import com.example.tkkil.phuot.Models.User;
@@ -53,12 +55,15 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -88,7 +93,7 @@ import de.hdodenhof.circleimageview.CircleImageView;
 import es.dmoral.toasty.Toasty;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener, LocationListener, View.OnClickListener {
+        GoogleApiClient.OnConnectionFailedListener, LocationListener, View.OnClickListener, GoogleMap.OnMarkerClickListener {
 
     private static final int REQUEST_LOCATION_CODE = 99;
     private static final int REQUEST_SELECT_PICTURE = 999;
@@ -127,6 +132,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private CircleImageView dialog_avatar;
     private User user;
     private String name;
+
+    private ArrayList<Marker> gasPlaces = new ArrayList<>();
+    private ArrayList<Marker> resPlaces = new ArrayList<>();
+    private ArrayList<Marker> hotelPlaces = new ArrayList<>();
+    private ArrayList<Polyline> polylinePlace = new ArrayList<>();
+    private ArrayList<Marker> randomMarker = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -342,6 +353,31 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             buildGoogleApiClient();
             mMap.setMyLocationEnabled(true);
         }
+        mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
+            @Override
+            public void onMapLongClick(LatLng latLng) {
+                if (polylinePlace.size() > 0) {
+                    for (int i = 0; i < polylinePlace.size(); i++) {
+                        polylinePlace.get(i).remove();
+                    }
+                    randomMarker.get(0).remove();
+                    randomMarker.clear();
+                    polylinePlace.clear();
+                }
+                Object dataTransfer[] = new Object[5];
+                String url = getDirectionUrl(latLng);
+                DirectionData directionData = new DirectionData();
+                dataTransfer[0] = mMap;
+                dataTransfer[1] = url;
+                dataTransfer[2] = latLng;
+                dataTransfer[3] = polylinePlace;
+                dataTransfer[4] = randomMarker;
+
+                directionData.execute(dataTransfer);
+            }
+        });
+
+        mMap.setOnMarkerClickListener(this);
     }
 
     private void initGoogleMap() {
@@ -913,11 +949,16 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             @Override
             public void onClick(View view) {
                 if (!isStatusRestaurant) {
+                    findNearbyPlaces(resPlaces, "restaurant");
                     nav_restaurant.setImageDrawable(getResources().getDrawable(R.drawable.ic_restaurant_white_24dp));
                     isStatusRestaurant = true;
                 } else {
                     nav_restaurant.setImageDrawable(getResources().getDrawable(R.drawable.ic_restaurant_blue_24dp));
                     isStatusRestaurant = false;
+                    for (int i = 0; i < resPlaces.size(); i++) {
+                        resPlaces.get(i).remove();
+                    }
+                    resPlaces.clear();
                 }
                 myDrawer.closeDrawer(GravityCompat.END);
             }
@@ -926,11 +967,16 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             @Override
             public void onClick(View view) {
                 if (!isStatusGas) {
+                    findNearbyPlaces(gasPlaces, "gas_station");
                     nav_gas.setImageDrawable(getResources().getDrawable(R.drawable.ic_local_gas_station_white_24dp));
                     isStatusGas = true;
                 } else {
                     nav_gas.setImageDrawable(getResources().getDrawable(R.drawable.ic_local_gas_station_blue_24dp));
                     isStatusGas = false;
+                    for (int i = 0; i < gasPlaces.size(); i++) {
+                        gasPlaces.get(i).remove();
+                    }
+                    gasPlaces.clear();
                 }
                 myDrawer.closeDrawer(GravityCompat.END);
             }
@@ -939,11 +985,16 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             @Override
             public void onClick(View view) {
                 if (!isStatusHotel) {
+                    findNearbyPlaces(hotelPlaces, "hotel");
                     nav_hotel.setImageDrawable(getResources().getDrawable(R.drawable.ic_home_white_24dp));
                     isStatusHotel = true;
                 } else {
                     nav_hotel.setImageDrawable(getResources().getDrawable(R.drawable.ic_home_blue_24dp));
                     isStatusHotel = false;
+                    for (int i = 0; i < hotelPlaces.size(); i++) {
+                        hotelPlaces.get(i).remove();
+                    }
+                    hotelPlaces.clear();
                 }
                 myDrawer.closeDrawer(GravityCompat.END);
             }
@@ -1040,7 +1091,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     @Override
                     public void onClick(View view, int position, boolean isLongClick) {
                         if (isLongClick) {
-
+                            myDrawer.closeDrawer(GravityCompat.END);
                         } else {
                             myRef.child("Groups/" + name + "/members").addChildEventListener(new ChildEventListener() {
                                 @Override
@@ -1051,9 +1102,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                             public void onDataChange(DataSnapshot dataSnapshot) {
                                                 User user = dataSnapshot.getValue(User.class);
                                                 if (user.getUid().equals(mAuth.getCurrentUser().getUid())) {
-                                                    Toast.makeText(MainActivity.this, "Can't beacasue that's you!", Toast.LENGTH_SHORT).show();
+//                                                    Toast.makeText(MainActivity.this, "Can't beacasue that's you!", Toast.LENGTH_SHORT).show();
+//                                                    Marker marker = hashMap.get(user.getUid());
+                                                    CameraPosition cameraPosition = new CameraPosition.Builder().target(new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude())).zoom(15).build();
+                                                    mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
                                                 } else {
-                                                    Toast.makeText(MainActivity.this, "" + user.getFullname(), Toast.LENGTH_SHORT).show();
+//                                                    Toast.makeText(MainActivity.this, "" + user.getUid(), Toast.LENGTH_SHORT).show();
+                                                    Marker marker = hashMap.get(user.getUid());
+
+                                                    CameraPosition cameraPosition = new CameraPosition.Builder().target(new LatLng(marker.getPosition().latitude, marker.getPosition().longitude)).zoom(15).build();
+                                                    mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+                                                    marker.showInfoWindow();
                                                 }
                                             }
 
@@ -1085,6 +1144,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                                 }
                             });
+                            myDrawer.closeDrawer(GravityCompat.END);
                         }
                     }
                 });
@@ -1095,6 +1155,48 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         nav_rcvListMember.setAdapter(adapter_member);
         adapter_member.startListening();
+    }
+
+    private String getUrl(double lat, double lng, String place) {
+        StringBuilder builder = new StringBuilder("https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=");
+        builder.append(lat + "," + lng);
+        builder.append("&radius=5000&type=" + place + "&key=AIzaSyBePIombi3MiNTVQRto5ZEI_lBAsjHBhPM");
+
+        return builder.toString();
+    }
+
+    private void findNearbyPlaces(ArrayList<Marker> places, String placeId) {
+        String url = getUrl(mLastLocation.getLatitude(), mLastLocation.getLongitude(), placeId);
+        Object dataTransfer[] = new Object[3];
+        dataTransfer[0] = mMap;
+        dataTransfer[1] = url;
+        dataTransfer[2] = places;
+
+        GetNearbyPlaces getNearbyPlaces = new GetNearbyPlaces();
+        getNearbyPlaces.execute(dataTransfer);
+        Toast.makeText(MainActivity.this, "Showing nearby " + placeId + "", Toast.LENGTH_SHORT).show();
+    }
+
+    private String getDirectionUrl(LatLng latLng) {
+        StringBuilder builder = new StringBuilder("https://maps.googleapis.com/maps/api/directions/json?");
+        builder.append("origin=" + mLastLocation.getLatitude() + "," + mLastLocation.getLongitude());
+        builder.append("&destination=" + latLng.latitude + "," + latLng.longitude);
+        builder.append("&key=AIzaSyC_xCz9Kx9M2oCctT6VRGs2k1lDqhgzlHk");
+
+        return builder.toString();
+    }
+
+    @Override
+    public boolean onMarkerClick(Marker marker) {
+        if (polylinePlace.size() > 0) {
+            for (int i = 0; i < polylinePlace.size(); i++) {
+                polylinePlace.get(i).remove();
+            }
+            randomMarker.get(0).remove();
+            randomMarker.clear();
+            polylinePlace.clear();
+        }
+        return true;
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {

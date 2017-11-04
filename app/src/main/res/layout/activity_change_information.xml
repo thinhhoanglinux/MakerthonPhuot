@@ -33,17 +33,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
                 <EditText
-                    android:enabled="false"
-                    android:id="@+id/edtUser"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@android:color/white"
-                    android:drawablePadding="16dp"
-                    android:drawableStart="@drawable/ic_person_outline_black_24dp"
-                    android:hint="@string/username"
-                    android:inputType="textPersonName"
-                    android:padding="16dp" />
-                <EditText
                     android:id="@+id/edtFullname"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

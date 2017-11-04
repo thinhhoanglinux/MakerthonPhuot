@@ -25,7 +25,7 @@ import com.google.firebase.database.FirebaseDatabase;
 public class RegisterActivity extends AppCompatActivity implements View.OnClickListener {
     TextView txtvBack;
     Button btnRegister;
-    private EditText edtEmail, edtPwd, edtUser, edtFull;
+    private EditText edtEmail, edtPwd, edtFull;
     private FirebaseAuth mAuth;
     private DatabaseReference mRef;
     private ProgressDialog mLoading;
@@ -73,7 +73,7 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
-                            User user = new User(edtFull.getText().toString().trim(), edtUser.getText().toString().trim(), mAuth.getCurrentUser().getEmail(),
+                            User user = new User(edtFull.getText().toString().trim(), mAuth.getCurrentUser().getEmail(),
                                     mAuth.getCurrentUser().getUid(), "", "", "", "", null);
                             mRef.child("Users/" + mAuth.getCurrentUser().getUid() + "/").setValue(user);
                         }
@@ -90,10 +90,6 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
 
     private boolean validate() {
         boolean isValidate = true;
-        if (TextUtils.isEmpty(edtUser.getText().toString().trim())) {
-            edtUser.setError("Please enter Username!");
-            isValidate = false;
-        }
         if (TextUtils.isEmpty(edtEmail.getText().toString().trim())) {
             edtEmail.setError("Please enter Email!");
             isValidate = false;
@@ -111,7 +107,6 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
     }
 
     private void init() {
-        edtUser = findViewById(R.id.edtUser);
         edtEmail = findViewById(R.id.edtEmail);
         edtPwd = findViewById(R.id.edtPwd);
         edtFull = findViewById(R.id.edtFull);
