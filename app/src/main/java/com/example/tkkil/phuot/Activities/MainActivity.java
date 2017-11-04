@@ -12,6 +12,7 @@ import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -27,7 +28,6 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -312,10 +312,21 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         Double curLat = mLastLocation.getLatitude();
         Double curLong = mLastLocation.getLongitude();
-        if (toolbar.getSubtitle() != null) {
+        if (!TextUtils.isEmpty(toolbar.getSubtitle())) {
             myRef.child("Groups/" + toolbar.getSubtitle() + "/members").child(mAuth.getCurrentUser().getUid()).setValue(curLat + " " + curLong);
-//            Log.d("AAA", curLat + " " + curLong);
         }
+
+        new Handler().postDelayed(new Runnable() {
+            @SuppressLint("SimpleDateFormat")
+            @Override
+            public void run() {
+//                Log.e("AAA",new SimpleDateFormat("dd-MM-yyyy HH:mm:ss").format(Calendar.getInstance().getTime()));
+                myRef.child("Users")
+                        .child("hanhtrinh")
+                        .child(new SimpleDateFormat("yyyyMMddHHmmss").format(Calendar.getInstance().getTime()))
+                        .setValue(mLastLocation.getLatitude() + " " + mLastLocation.getLongitude());
+            }
+        }, 15 * 60 * 1000);
 
         /*if (mCurrentLocationMarker != null) {
             mCurrentLocationMarker.remove();
@@ -377,28 +388,30 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         @Override
                         public void onDataChange(DataSnapshot dataSnapshot) {
                             String s = dataSnapshot.getValue(String.class);
-                            String a[] = s.split(" ");
-                            Double lat = Double.parseDouble(a[0]);
-                            Double longg = Double.parseDouble(a[1]);
-                            if (polylinePlace.size() > 0) {
-                                for (int i = 0; i < polylinePlace.size(); i++) {
-                                    polylinePlace.get(i).remove();
+                            if (s != null) {
+                                String a[] = s.split(" ");
+                                Double lat = Double.parseDouble(a[0]);
+                                Double longg = Double.parseDouble(a[1]);
+                                if (polylinePlace.size() > 0) {
+                                    for (int i = 0; i < polylinePlace.size(); i++) {
+                                        polylinePlace.get(i).remove();
+                                    }
+                                    randomMarker.get(0).remove();
+                                    randomMarker.clear();
+                                    polylinePlace.clear();
                                 }
-                                randomMarker.get(0).remove();
-                                randomMarker.clear();
-                                polylinePlace.clear();
-                            }
-                            LatLng latLng1 = new LatLng(lat,longg);
-                            Object dataTransfer[] = new Object[5];
-                            String url = getDirectionUrl(latLng1);
-                            DirectionData directionData = new DirectionData();
-                            dataTransfer[0] = mMap;
-                            dataTransfer[1] = url;
-                            dataTransfer[2] = latLng1;
-                            dataTransfer[3] = polylinePlace;
-                            dataTransfer[4] = randomMarker;
+                                LatLng latLng1 = new LatLng(lat, longg);
+                                Object dataTransfer[] = new Object[5];
+                                String url = getDirectionUrl(latLng1);
+                                DirectionData directionData = new DirectionData();
+                                dataTransfer[0] = mMap;
+                                dataTransfer[1] = url;
+                                dataTransfer[2] = latLng1;
+                                dataTransfer[3] = polylinePlace;
+                                dataTransfer[4] = randomMarker;
 
-                            directionData.execute(dataTransfer);
+                                directionData.execute(dataTransfer);
+                            }
 //                            Toast.makeText(MainActivity.this, "" + s, Toast.LENGTH_SHORT).show();
                         }
 
@@ -726,6 +739,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 holder.setItemClickListener(new ItemClickListener() {
                     @Override
                     public void onClick(View view, int position, boolean isLongClick) {
+                        CameraPosition cameraPosition = new CameraPosition.Builder().target(new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude())).zoom(15).build();
+                        mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
                         toolbar.setSubtitle(model.getName());
                         nav_follow.setVisibility(View.VISIBLE);
                         onLoadMember(model.getName());
@@ -743,10 +758,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                     markerOptions.position(new LatLng(lat, lng));
                                     Marker marker = mMap.addMarker(markerOptions);
                                     hashMap.put(s, marker);
-//                                    Log.d("AAA", s);
-
 //                                    myRef.child("Groups/"+model.getName()+"/members/"+mAuth.getCurrentUser().getUid()).setValue(mCurrentLocationMarker.getPosition().latitude+" " +mCurrentLocationMarker.getPosition().longitude);
-
 //                                    myDrawer.closeDrawer(GravityCompat.START);
                                 }
                             }
@@ -786,6 +798,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             }
                         });
                         mMap.clear();
+                        myDrawer.closeDrawer(GravityCompat.START);
                     }
                 });
 
@@ -793,7 +806,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 myRef.child("Users").child(model.getHost()).child("fullname").addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
-                        holder.txtvFullname.setText(dataSnapshot.getValue().toString());
+                        String s = dataSnapshot.getValue(String.class);
+                        if (s != null) {
+                            holder.txtvFullname.setText(s);
+                        }
                     }
 
                     @Override
@@ -805,50 +821,24 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 myRef.child("Groups").child(model.getName()).child("host").addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
-                        if (dataSnapshot.getValue().toString().contains(mAuth.getCurrentUser().getUid())) {
-                            holder.btnDelete.setText("DELETE");
-                            holder.btnDelete.setOnClickListener(new View.OnClickListener() {
-                                @Override
-                                public void onClick(View view) {
-                                    AlertDialog.Builder ab = new AlertDialog.Builder(MainActivity.this, R.style.MyDialogTheme);
-                                    ab.setTitle("DELETE");
-                                    ab.setMessage("Are you sure?");
-                                    ab.setPositiveButton("YES", new DialogInterface.OnClickListener() {
-                                        @Override
-                                        public void onClick(DialogInterface dialogInterface, int i) {
-                                            myRef.child("Groups").child(model.getName()).removeValue().addOnCompleteListener(new OnCompleteListener<Void>() {
-                                                @Override
-                                                public void onComplete(@NonNull Task<Void> task) {
-                                                    if (task.isSuccessful()) {
-                                                        Toast.makeText(MainActivity.this, "Deleted!", Toast.LENGTH_SHORT).show();
-                                                        mMap.clear();
-                                                    }
-                                                }
-                                            });
-                                        }
-                                    });
-                                    ab.setNegativeButton("NO", null);
-                                    AlertDialog alertDialog = ab.create();
-                                    alertDialog.show();
-                                }
-                            });
-                        } else {
-                            holder.btnDelete.setText("QUIT");
-                            holder.btnDelete.setOnClickListener(new View.OnClickListener() {
-                                @Override
-                                public void onClick(View view) {
-                                    AlertDialog.Builder ab = new AlertDialog.Builder(MainActivity.this, R.style.MyDialogTheme);
-                                    ab.setTitle("DELETE");
-                                    ab.setMessage("Are you sure?");
-                                    ab.setPositiveButton("YES", new DialogInterface.OnClickListener() {
-                                        @Override
-                                        public void onClick(DialogInterface dialogInterface, int i) {
-                                            if (model.getName() != null) {
-                                                myRef.child("Groups/" + model.getName() + "/members/" + mAuth.getCurrentUser().getUid()).removeValue().addOnCompleteListener(new OnCompleteListener<Void>() {
+                        String s = dataSnapshot.getValue(String.class);
+                        if (s != null) {
+                            if (s.contains(mAuth.getCurrentUser().getUid())) {
+                                holder.btnDelete.setText("DELETE");
+                                holder.btnDelete.setOnClickListener(new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View view) {
+                                        AlertDialog.Builder ab = new AlertDialog.Builder(MainActivity.this, R.style.MyDialogTheme);
+                                        ab.setTitle("DELETE");
+                                        ab.setMessage("Are you sure?");
+                                        ab.setPositiveButton("YES", new DialogInterface.OnClickListener() {
+                                            @Override
+                                            public void onClick(DialogInterface dialogInterface, int i) {
+                                                myRef.child("Groups").child(model.getName()).removeValue().addOnCompleteListener(new OnCompleteListener<Void>() {
                                                     @Override
                                                     public void onComplete(@NonNull Task<Void> task) {
                                                         if (task.isSuccessful()) {
-                                                            Toast.makeText(MainActivity.this, "Quited!", Toast.LENGTH_SHORT).show();
+                                                            Toast.makeText(MainActivity.this, "Deleted!", Toast.LENGTH_SHORT).show();
                                                             toolbar.setSubtitle("");
                                                             onLoadMember("");
                                                             mMap.clear();
@@ -856,13 +846,44 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                                     }
                                                 });
                                             }
-                                        }
-                                    });
-                                    ab.setNegativeButton("NO", null);
-                                    AlertDialog alertDialog = ab.create();
-                                    alertDialog.show();
-                                }
-                            });
+                                        });
+                                        ab.setNegativeButton("NO", null);
+                                        AlertDialog alertDialog = ab.create();
+                                        alertDialog.show();
+                                    }
+                                });
+                            } else {
+                                holder.btnDelete.setText("QUIT");
+                                holder.btnDelete.setOnClickListener(new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View view) {
+                                        AlertDialog.Builder ab = new AlertDialog.Builder(MainActivity.this, R.style.MyDialogTheme);
+                                        ab.setTitle("DELETE");
+                                        ab.setMessage("Are you sure?");
+                                        ab.setPositiveButton("YES", new DialogInterface.OnClickListener() {
+                                            @Override
+                                            public void onClick(DialogInterface dialogInterface, int i) {
+                                                if (model.getName() != null) {
+                                                    myRef.child("Groups/" + model.getName() + "/members/" + mAuth.getCurrentUser().getUid()).removeValue().addOnCompleteListener(new OnCompleteListener<Void>() {
+                                                        @Override
+                                                        public void onComplete(@NonNull Task<Void> task) {
+                                                            if (task.isSuccessful()) {
+                                                                Toast.makeText(MainActivity.this, "Quited!", Toast.LENGTH_SHORT).show();
+                                                                toolbar.setSubtitle("");
+                                                                onLoadMember("");
+                                                                mMap.clear();
+                                                            }
+                                                        }
+                                                    });
+                                                }
+                                            }
+                                        });
+                                        ab.setNegativeButton("NO", null);
+                                        AlertDialog alertDialog = ab.create();
+                                        alertDialog.show();
+                                    }
+                                });
+                            }
                         }
                     }
 
@@ -988,7 +1009,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         nav_hotel = findViewById(R.id.nav_hotel);
         nav_follow = findViewById(R.id.nav_follow);
         nav_sos = findViewById(R.id.nav_sos);
-
         nav_restaurant.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -1051,60 +1071,50 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 myDrawer.closeDrawer(GravityCompat.END);
             }
         });
-
         nav_follow.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if (!isStatusFollow) {
                     nav_follow.setText("Following");
                     isStatusFollow = true;
-                    myRef.child("Groups").child(toolbar.getSubtitle().toString()).child("host").addValueEventListener(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(DataSnapshot dataSnapshot) {
-                            String s = dataSnapshot.getValue(String.class);
-                            if (s.contains(mAuth.getCurrentUser().getUid())) {
-                                myRef.child("Groups").child(toolbar.getSubtitle().toString()).child("members").child(mAuth.getCurrentUser().getUid()).addValueEventListener(new ValueEventListener() {
-                                    @Override
-                                    public void onDataChange(DataSnapshot dataSnapshot) {
-                                        String s = dataSnapshot.getValue(String.class);
-                                        String[] a = s.split(" ");
-                                        Double lat = Double.parseDouble(a[0]);
-                                        Double longg = Double.parseDouble(a[1]);
-
-                                        if (polylinePlace.size() > 0) {
-                                            for (int i = 0; i < polylinePlace.size(); i++) {
-                                                polylinePlace.get(i).remove();
-                                            }
-                                            randomMarker.get(0).remove();
-                                            randomMarker.clear();
-                                            polylinePlace.clear();
-                                        }
-                                        LatLng latLng1 = new LatLng(lat,longg);
-                                        Object dataTransfer[] = new Object[5];
-                                        String url = getDirectionUrl(latLng1);
-                                        DirectionData directionData = new DirectionData();
-                                        dataTransfer[0] = mMap;
-                                        dataTransfer[1] = url;
-                                        dataTransfer[2] = latLng1;
-                                        dataTransfer[3] = polylinePlace;
-                                        dataTransfer[4] = randomMarker;
-
-                                        directionData.execute(dataTransfer);
+                    String subtitle = toolbar.getSubtitle().toString();
+                    if (!TextUtils.isEmpty(subtitle)) {
+                        myRef.child("Groups").child(subtitle).child("mylocation").setValue(mLastLocation.getLatitude() + " " + mLastLocation.getLongitude());
+                        myRef.child("Groups").child(subtitle).child("mylocation").addValueEventListener(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(DataSnapshot dataSnapshot) {
+                                String s = dataSnapshot.getValue(String.class);
+                                String[] a = s.split(" ");
+                                Double lat = Double.parseDouble(a[0]);
+                                Double longg = Double.parseDouble(a[1]);
+                                if (polylinePlace.size() > 0) {
+                                    for (int i = 0; i < polylinePlace.size(); i++) {
+                                        polylinePlace.get(i).remove();
                                     }
+                                    randomMarker.get(0).remove();
+                                    randomMarker.clear();
+                                    polylinePlace.clear();
+                                }
+                                LatLng latLng1 = new LatLng(lat, longg);
+                                Object dataTransfer[] = new Object[5];
+                                String url = getDirectionUrl(latLng1);
+                                DirectionData directionData = new DirectionData();
+                                dataTransfer[0] = mMap;
+                                dataTransfer[1] = url;
+                                dataTransfer[2] = latLng1;
+                                dataTransfer[3] = polylinePlace;
+                                dataTransfer[4] = randomMarker;
 
-                                    @Override
-                                    public void onCancelled(DatabaseError databaseError) {
-
-                                    }
-                                });
+                                directionData.execute(dataTransfer);
                             }
-                        }
 
-                        @Override
-                        public void onCancelled(DatabaseError databaseError) {
+                            @Override
+                            public void onCancelled(DatabaseError databaseError) {
 
-                        }
-                    });
+                            }
+                        });
+                    }
+
                 } else {
                     nav_follow.setText("Follow");
                     isStatusFollow = false;
@@ -1258,10 +1268,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void findNearbyPlaces(ArrayList<Marker> places, String placeId) {
         String url = getUrl(mLastLocation.getLatitude(), mLastLocation.getLongitude(), placeId);
-        Object dataTransfer[] = new Object[3];
+        Object dataTransfer[] = new Object[4];
         dataTransfer[0] = mMap;
         dataTransfer[1] = url;
         dataTransfer[2] = places;
+        dataTransfer[3] = placeId;
 
         GetNearbyPlaces getNearbyPlaces = new GetNearbyPlaces();
         getNearbyPlaces.execute(dataTransfer);
@@ -1282,7 +1293,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (polylinePlace.size() > 0) {
             for (int i = 0; i < polylinePlace.size(); i++) {
                 polylinePlace.get(i).remove();
-                myRef.child("Groups").child(toolbar.getSubtitle().toString()).child("sharelocation").setValue(mLastLocation.getLatitude()+" " + mLastLocation.getLongitude());
+                String subtitle = toolbar.getSubtitle().toString();
+                if(!TextUtils.isEmpty(subtitle)){
+                    myRef.child("Groups").child(toolbar.getSubtitle().toString()).child("sharelocation").setValue(mLastLocation.getLatitude() + " " + mLastLocation.getLongitude());
+                }
             }
             randomMarker.get(0).remove();
             randomMarker.clear();
@@ -1290,7 +1304,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             mMap.clear();
         }
 
-        return true;
+        return false;
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
