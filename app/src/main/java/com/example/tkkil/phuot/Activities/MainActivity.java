@@ -351,8 +351,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
         mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
             @Override
-            public void onMapLongClick(LatLng latLng) {
-                if (polylinePlace.size() > 0) {
+            public void onMapLongClick(final LatLng latLng) {
+                /*if (polylinePlace.size() > 0) {
                     for (int i = 0; i < polylinePlace.size(); i++) {
                         polylinePlace.get(i).remove();
                     }
@@ -369,7 +369,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 dataTransfer[3] = polylinePlace;
                 dataTransfer[4] = randomMarker;
 
-                directionData.execute(dataTransfer);
+                directionData.execute(dataTransfer);*/
 
                 if (toolbar.getSubtitle() != null) {
                     myRef.child("Groups").child(toolbar.getSubtitle().toString()).child("sharelocation").setValue(latLng.latitude + " " + latLng.longitude);
@@ -377,7 +377,29 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         @Override
                         public void onDataChange(DataSnapshot dataSnapshot) {
                             String s = dataSnapshot.getValue(String.class);
-                            Toast.makeText(MainActivity.this, "" + s, Toast.LENGTH_SHORT).show();
+                            String a[] = s.split(" ");
+                            Double lat = Double.parseDouble(a[0]);
+                            Double longg = Double.parseDouble(a[1]);
+                            if (polylinePlace.size() > 0) {
+                                for (int i = 0; i < polylinePlace.size(); i++) {
+                                    polylinePlace.get(i).remove();
+                                }
+                                randomMarker.get(0).remove();
+                                randomMarker.clear();
+                                polylinePlace.clear();
+                            }
+                            LatLng latLng1 = new LatLng(lat,longg);
+                            Object dataTransfer[] = new Object[5];
+                            String url = getDirectionUrl(latLng1);
+                            DirectionData directionData = new DirectionData();
+                            dataTransfer[0] = mMap;
+                            dataTransfer[1] = url;
+                            dataTransfer[2] = latLng1;
+                            dataTransfer[3] = polylinePlace;
+                            dataTransfer[4] = randomMarker;
+
+                            directionData.execute(dataTransfer);
+//                            Toast.makeText(MainActivity.this, "" + s, Toast.LENGTH_SHORT).show();
                         }
 
                         @Override
@@ -732,7 +754,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             @Override
                             public void onChildChanged(DataSnapshot dataSnapshot, String s) {
                                 if (dataSnapshot.getKey().toString().contains(mAuth.getCurrentUser().getUid())) {
-                                    Log.d("CCC",dataSnapshot.getKey());
+//                                    Log.d("CCC",dataSnapshot.getKey());
                                 } else {
                                     String[] a = dataSnapshot.getValue().toString().split(" ");
                                     Double latt = Double.parseDouble(a[0]);
@@ -741,7 +763,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                     hashMap.remove(dataSnapshot.getKey());
                                     MarkerOptions markerOptions = new MarkerOptions();
                                     markerOptions.position(new LatLng(latt, longg));
-                                    Log.d("BBB", latt + " " + longg);
+//                                    Log.d("BBB", latt + " " + longg);
                                     Marker marker = mMap.addMarker(markerOptions);
                                     hashMap.put(dataSnapshot.getKey(), marker);
                                 }
@@ -1041,7 +1063,40 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         public void onDataChange(DataSnapshot dataSnapshot) {
                             String s = dataSnapshot.getValue(String.class);
                             if (s.contains(mAuth.getCurrentUser().getUid())) {
-                                Toast.makeText(MainActivity.this, "" + dataSnapshot.getKey(), Toast.LENGTH_SHORT).show();
+                                myRef.child("Groups").child(toolbar.getSubtitle().toString()).child("members").child(mAuth.getCurrentUser().getUid()).addValueEventListener(new ValueEventListener() {
+                                    @Override
+                                    public void onDataChange(DataSnapshot dataSnapshot) {
+                                        String s = dataSnapshot.getValue(String.class);
+                                        String[] a = s.split(" ");
+                                        Double lat = Double.parseDouble(a[0]);
+                                        Double longg = Double.parseDouble(a[1]);
+
+                                        if (polylinePlace.size() > 0) {
+                                            for (int i = 0; i < polylinePlace.size(); i++) {
+                                                polylinePlace.get(i).remove();
+                                            }
+                                            randomMarker.get(0).remove();
+                                            randomMarker.clear();
+                                            polylinePlace.clear();
+                                        }
+                                        LatLng latLng1 = new LatLng(lat,longg);
+                                        Object dataTransfer[] = new Object[5];
+                                        String url = getDirectionUrl(latLng1);
+                                        DirectionData directionData = new DirectionData();
+                                        dataTransfer[0] = mMap;
+                                        dataTransfer[1] = url;
+                                        dataTransfer[2] = latLng1;
+                                        dataTransfer[3] = polylinePlace;
+                                        dataTransfer[4] = randomMarker;
+
+                                        directionData.execute(dataTransfer);
+                                    }
+
+                                    @Override
+                                    public void onCancelled(DatabaseError databaseError) {
+
+                                    }
+                                });
                             }
                         }
 
@@ -1227,11 +1282,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (polylinePlace.size() > 0) {
             for (int i = 0; i < polylinePlace.size(); i++) {
                 polylinePlace.get(i).remove();
+                myRef.child("Groups").child(toolbar.getSubtitle().toString()).child("sharelocation").setValue(mLastLocation.getLatitude()+" " + mLastLocation.getLongitude());
             }
             randomMarker.get(0).remove();
             randomMarker.clear();
             polylinePlace.clear();
+            mMap.clear();
         }
+
         return true;
     }
 
