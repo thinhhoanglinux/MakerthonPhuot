@@ -56,7 +56,7 @@ public class ListLichTrinhActivity extends AppCompatActivity {
         rcv_listLichTrinh = findViewById(R.id.rcv_listLichTrinh);
         rcv_listLichTrinh.setHasFixedSize(true);
         rcv_listLichTrinh.setLayoutManager(new LinearLayoutManager(this));
-        Query query = myRef.child("Users").child(mAuth.getCurrentUser().getUid()).child("hanhtrinh");
+        Query query = myRef.child("nhatky").child(mAuth.getCurrentUser().getUid());
         FirebaseRecyclerOptions<String> options = new FirebaseRecyclerOptions.Builder<String>().setQuery(query,String.class).build();
         adapter = new FirebaseRecyclerAdapter<String,ViewHolder>(options) {
 
@@ -69,7 +69,7 @@ public class ListLichTrinhActivity extends AppCompatActivity {
             @Override
             protected void onBindViewHolder(final ViewHolder holder, int position, final String model) {
                 holder.txtvName.setText(model);
-                myRef.child("Users").child(mAuth.getCurrentUser().getUid()).child("hanhtrinh").addChildEventListener(new ChildEventListener() {
+                myRef.child("nhatky").child(mAuth.getCurrentUser().getUid()).addChildEventListener(new ChildEventListener() {
                     @Override
                     public void onChildAdded(DataSnapshot dataSnapshot, String s) {
                         if(dataSnapshot.getValue(String.class).equals(model)) {
@@ -97,6 +97,35 @@ public class ListLichTrinhActivity extends AppCompatActivity {
 
                     }
                 });
+
+                /*myRef.child("Users").child(mAuth.getCurrentUser().getUid()).child("hanhtrinh").addChildEventListener(new ChildEventListener() {
+                    @Override
+                    public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                        if(dataSnapshot.getValue(String.class).equals(model)) {
+                            holder.txtvTime.setText(dataSnapshot.getKey());
+                        }
+                    }
+
+                    @Override
+                    public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+
+                    }
+
+                    @Override
+                    public void onChildRemoved(DataSnapshot dataSnapshot) {
+
+                    }
+
+                    @Override
+                    public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                });*/
             }
         };
         rcv_listLichTrinh.setAdapter(adapter);

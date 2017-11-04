@@ -318,18 +318,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
 
 
-        /*new Handler().postDelayed(new Runnable() {
+        new Handler().postDelayed(new Runnable() {
             @SuppressLint("SimpleDateFormat")
             @Override
             public void run() {
 //                Log.e("AAA",new SimpleDateFormat("dd-MM-yyyy HH:mm:ss").format(Calendar.getInstance().getTime()));
-                myRef.child("Users")
+                myRef.child("nhatky")
                         .child(mAuth.getCurrentUser().getUid())
-                        .child("hanhtrinh")
                         .child(new SimpleDateFormat("dd-MM-yyyy HH:mm:ss").format(Calendar.getInstance().getTime()))
                         .setValue(mLastLocation.getLatitude() + " " + mLastLocation.getLongitude());
             }
-        }, 10000);*/
+        }, 10000);
         /*if (mCurrentLocationMarker != null) {
             mCurrentLocationMarker.remove();
         }
