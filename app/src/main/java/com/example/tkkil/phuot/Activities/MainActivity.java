@@ -106,7 +106,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     GroupAdapter adapter_group;
     FirebaseRecyclerAdapter adapter, adapter_member;
     Toolbar toolbar;
-    HashMap<String, Marker> hashMap = new HashMap<>();
+    HashMap<String, Marker> hashMap;
     ImageView nav_restaurant, nav_gas, nav_hotel;
     Button nav_follow, nav_sos;
     boolean isStatusRestaurant = false;
@@ -149,7 +149,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mStorage = FirebaseStorage.getInstance().getReference();
         mAuth = FirebaseAuth.getInstance();
         myRef = FirebaseDatabase.getInstance().getReference();
-
         loading = new ProgressDialog(this, R.style.MyDialogTheme);
         loading.setTitle("LOADING");
         loading.setMessage("Please wait...");
@@ -240,6 +239,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     protected void onStart() {
         super.onStart();
+        hashMap = new HashMap<>();
         adapter.startListening();
     }
 
@@ -312,15 +312,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         Double curLat = mLastLocation.getLatitude();
         Double curLong = mLastLocation.getLongitude();
-
         if (toolbar.getSubtitle() != null) {
             myRef.child("Groups/" + toolbar.getSubtitle() + "/members").child(mAuth.getCurrentUser().getUid()).setValue(curLat + " " + curLong);
 //            Log.d("AAA", curLat + " " + curLong);
         }
 
-/*
-
-        if (mCurrentLocationMarker != null) {
+        /*if (mCurrentLocationMarker != null) {
             mCurrentLocationMarker.remove();
         }
 
@@ -330,8 +327,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         markerOptions.title("Current Location");
         markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
 
-        mCurrentLocationMarker = mMap.addMarker(markerOptions);
-*/
+        mCurrentLocationMarker = mMap.addMarker(markerOptions);*/
 
 
 //        mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
@@ -340,9 +336,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 //        CameraPosition cameraPosition = new CameraPosition.Builder().target(latLng).zoom(15).build();
 //        mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
 
-        if (mClient != null) {
+       /* if (mClient != null) {
             LocationServices.FusedLocationApi.removeLocationUpdates(mClient, this);
-        }
+        }*/
     }
 
     @Override
@@ -376,8 +372,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 directionData.execute(dataTransfer);
 
                 if (toolbar.getSubtitle() != null) {
-                    myRef.child("Groups").child(toolbar.getSubtitle().toString()).child("pointFollow").setValue(latLng.latitude + " " + latLng.longitude);
-                    myRef.child("Groups").child(toolbar.getSubtitle().toString()).child("pointFollow").addValueEventListener(new ValueEventListener() {
+                    myRef.child("Groups").child(toolbar.getSubtitle().toString()).child("sharelocation").setValue(latLng.latitude + " " + latLng.longitude);
+                    myRef.child("Groups").child(toolbar.getSubtitle().toString()).child("sharelocation").addValueEventListener(new ValueEventListener() {
                         @Override
                         public void onDataChange(DataSnapshot dataSnapshot) {
                             String s = dataSnapshot.getValue(String.class);
@@ -715,27 +711,28 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             @Override
                             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
                                 if (dataSnapshot.getKey().contains(mAuth.getCurrentUser().getUid())) {
+
                                 } else {
+                                    s = dataSnapshot.getKey();
                                     String[] a = dataSnapshot.getValue().toString().split(" ");
                                     Double lat = Double.parseDouble(a[0]);
                                     Double lng = Double.parseDouble(a[1]);
                                     MarkerOptions markerOptions = new MarkerOptions();
                                     markerOptions.position(new LatLng(lat, lng));
                                     Marker marker = mMap.addMarker(markerOptions);
-                                    hashMap.put(dataSnapshot.getKey(), marker);
+                                    hashMap.put(s, marker);
+//                                    Log.d("AAA", s);
 
 //                                    myRef.child("Groups/"+model.getName()+"/members/"+mAuth.getCurrentUser().getUid()).setValue(mCurrentLocationMarker.getPosition().latitude+" " +mCurrentLocationMarker.getPosition().longitude);
 
-                                    myDrawer.closeDrawer(GravityCompat.START);
-
-
+//                                    myDrawer.closeDrawer(GravityCompat.START);
                                 }
                             }
 
                             @Override
                             public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-                                if (dataSnapshot.getKey().toString().contains(model.getName())) {
-
+                                if (dataSnapshot.getKey().toString().contains(mAuth.getCurrentUser().getUid())) {
+                                    Log.d("CCC",dataSnapshot.getKey());
                                 } else {
                                     String[] a = dataSnapshot.getValue().toString().split(" ");
                                     Double latt = Double.parseDouble(a[0]);
