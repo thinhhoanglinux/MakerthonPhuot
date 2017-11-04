@@ -28,6 +28,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -314,6 +315,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         Double curLong = mLastLocation.getLongitude();
         if (!TextUtils.isEmpty(toolbar.getSubtitle())) {
             myRef.child("Groups/" + toolbar.getSubtitle() + "/members").child(mAuth.getCurrentUser().getUid()).setValue(curLat + " " + curLong);
+            Log.e("AAA",curLat+" " +curLong );
         }
 
         new Handler().postDelayed(new Runnable() {
@@ -322,11 +324,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             public void run() {
 //                Log.e("AAA",new SimpleDateFormat("dd-MM-yyyy HH:mm:ss").format(Calendar.getInstance().getTime()));
                 myRef.child("Users")
+                        .child(mAuth.getCurrentUser().getUid())
                         .child("hanhtrinh")
                         .child(new SimpleDateFormat("yyyyMMddHHmmss").format(Calendar.getInstance().getTime()))
                         .setValue(mLastLocation.getLatitude() + " " + mLastLocation.getLongitude());
             }
-        }, 15 * 60 * 1000);
+        }, 15*60*1000);
 
         /*if (mCurrentLocationMarker != null) {
             mCurrentLocationMarker.remove();
@@ -382,7 +385,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 directionData.execute(dataTransfer);*/
 
-                if (toolbar.getSubtitle() != null) {
+                if (!TextUtils.isEmpty(toolbar.getSubtitle())) {
                     myRef.child("Groups").child(toolbar.getSubtitle().toString()).child("sharelocation").setValue(latLng.latitude + " " + latLng.longitude);
                     myRef.child("Groups").child(toolbar.getSubtitle().toString()).child("sharelocation").addValueEventListener(new ValueEventListener() {
                         @Override
