@@ -11,6 +11,7 @@ import android.graphics.Bitmap;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -22,7 +23,6 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -53,12 +53,9 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
-import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -85,7 +82,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 
 import de.hdodenhof.circleimageview.CircleImageView;
@@ -95,46 +91,43 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         GoogleApiClient.OnConnectionFailedListener, LocationListener, View.OnClickListener {
 
     private static final int REQUEST_LOCATION_CODE = 99;
+    private static final int REQUEST_SELECT_PICTURE = 999;
+    NavigationView myNav;
+    Bitmap bitmap;
+    RecyclerView nav_rcvListGroup;
+    //    FirebaseRecyclerAdapter adapterabc;
+    Button nav_btnCreate, nav_btnJoin;
+    ArrayList<Group> groups;
+    GroupAdapter adapter_group;
+    FirebaseRecyclerAdapter adapter, adapter_member;
+    Toolbar toolbar;
+    HashMap<String, Marker> hashMap = new HashMap<>();
+    ImageView nav_restaurant, nav_gas, nav_hotel;
+    Button nav_follow, nav_sos;
+    boolean isStatusRestaurant = false;
+    boolean isStatusGas = false;
+    boolean isStatusHotel = false;
+    boolean isStatusFollow = false;
+    boolean isStatus = true;
     private GoogleMap mMap;
     private GoogleApiClient mClient;
     private LocationRequest locationRequest;
     private Location mLastLocation;
-    private Marker mCurrentLocationMarker;
-
-    private static final int REQUEST_SELECT_PICTURE = 999;
+    //    private Marker mCurrentLocationMarker;
     private StorageReference mStorage;
     private FirebaseAuth mAuth;
     private DatabaseReference myRef;
-    NavigationView myNav;
     private DrawerLayout myDrawer;
     private ProgressDialog loading;
     private Uri filepath;
-    Bitmap bitmap;
-    RecyclerView nav_rcvListGroup;
     //Header-Nav
     private CircleImageView nav_avatar;
     private TextView nav_name, nav_email;
     //Dialog avatar
     private CircleImageView dialog_avatar;
     private User user;
-    //    FirebaseRecyclerAdapter adapterabc;
-    Button nav_btnCreate, nav_btnJoin;
+    private String name;
 
-    ArrayList<Group> groups;
-    GroupAdapter adapter_group;
-
-    FirebaseRecyclerAdapter adapter, adapter_member;
-
-    Toolbar toolbar;
-
-    HashMap<String, Marker> hashMap = new HashMap<>();
-
-    ImageView nav_restaurant,nav_gas,nav_hotel;
-    Button nav_follow,nav_sos;
-    boolean isStatusRestaurant = false;
-    boolean isStatusGas = false;
-    boolean isStatusHotel = false;
-    boolean isStatusFollow = false;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -145,13 +138,69 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mStorage = FirebaseStorage.getInstance().getReference();
         mAuth = FirebaseAuth.getInstance();
         myRef = FirebaseDatabase.getInstance().getReference();
+
         loading = new ProgressDialog(this, R.style.MyDialogTheme);
         loading.setTitle("LOADING");
         loading.setMessage("Please wait...");
 
-
         init();
         initToolbar();
+        myRef.child("SOS").addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                s = dataSnapshot.getValue(String.class);
+                if (s != null) {
+                    if (!isStatus) {
+                        myRef.child("Users").child(s).addValueEventListener(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(DataSnapshot dataSnapshot) {
+                                User user = dataSnapshot.getValue(User.class);
+                                AlertDialog.Builder ab = new AlertDialog.Builder(MainActivity.this, R.style.MyDialogTheme);
+                                ab.setMessage("HELP ME, PLEASE! My name is " + user.getFullname());
+                                ab.setTitle("SOS");
+                                ab.setPositiveButton("OK", null);
+                                final AlertDialog alertDialog = ab.create();
+                                alertDialog.setOnShowListener(new DialogInterface.OnShowListener() {
+                                    @Override
+                                    public void onShow(DialogInterface dialogInterface) {
+                                        alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getResources().getColor(android.R.color.holo_red_light));
+                                    }
+                                });
+                                alertDialog.setCanceledOnTouchOutside(false);
+                                alertDialog.show();
+                            }
+
+                            @Override
+                            public void onCancelled(DatabaseError databaseError) {
+
+                            }
+                        });
+                    }
+                } else {
+                    Toast.makeText(MainActivity.this, "Error!", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot) {
+
+            }
+
+            @Override
+            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
     }
 
     private boolean checkLocationPermisstion() {
@@ -250,14 +299,15 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onLocationChanged(Location location) {
         mLastLocation = location;
 
-        Double curLat = location.getLatitude();
-        Double curLong = location.getLongitude();
+        Double curLat = mLastLocation.getLatitude();
+        Double curLong = mLastLocation.getLongitude();
 
         if (toolbar.getSubtitle() != null) {
             myRef.child("Groups/" + toolbar.getSubtitle() + "/members").child(mAuth.getCurrentUser().getUid()).setValue(curLat + " " + curLong);
 //            Log.d("AAA", curLat + " " + curLong);
         }
 
+/*
 
         if (mCurrentLocationMarker != null) {
             mCurrentLocationMarker.remove();
@@ -270,6 +320,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
 
         mCurrentLocationMarker = mMap.addMarker(markerOptions);
+*/
 
 
 //        mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
@@ -278,9 +329,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 //        CameraPosition cameraPosition = new CameraPosition.Builder().target(latLng).zoom(15).build();
 //        mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
 
-//        if (mClient != null) {
-//            LocationServices.FusedLocationApi.removeLocationUpdates(mClient, this);
-//        }
+        if (mClient != null) {
+            LocationServices.FusedLocationApi.removeLocationUpdates(mClient, this);
+        }
     }
 
     @Override
@@ -309,66 +360,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 break;
             default:
                 break;
-        }
-    }
-
-    public static class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
-        TextView txtvNameGroup, txtvQuantity, txtvFullname;
-        Button btnDelete;
-        ItemClickListener itemClickListener;
-
-        ViewHolder(View itemView) {
-            super(itemView);
-            txtvNameGroup = itemView.findViewById(R.id.txtvNameGroup);
-            txtvQuantity = itemView.findViewById(R.id.txtvQuantity);
-            txtvFullname = itemView.findViewById(R.id.txtvFullname);
-            btnDelete = itemView.findViewById(R.id.btnDelete);
-            itemView.setOnClickListener(this);
-            itemView.setOnLongClickListener(this);
-        }
-
-        public void setItemClickListener(ItemClickListener itemClickListener) {
-            this.itemClickListener = itemClickListener;
-        }
-
-        @Override
-        public void onClick(View view) {
-            itemClickListener.onClick(view, getAdapterPosition(), false);
-        }
-
-        @Override
-        public boolean onLongClick(View view) {
-            itemClickListener.onClick(view, getAdapterPosition(), true);
-            return true;
-        }
-    }
-
-    public static class ViewHolderMember extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
-        CircleImageView item_avatar;
-        TextView item_name;
-        ItemClickListener itemClickListener;
-
-        ViewHolderMember(View itemView) {
-            super(itemView);
-            item_avatar = itemView.findViewById(R.id.item_avatar);
-            item_name = itemView.findViewById(R.id.item_name);
-            itemView.setOnClickListener(this);
-            itemView.setOnLongClickListener(this);
-        }
-
-        public void setItemClickListener(ItemClickListener itemClickListener) {
-            this.itemClickListener = itemClickListener;
-        }
-
-        @Override
-        public void onClick(View view) {
-            itemClickListener.onClick(view, getAdapterPosition(), false);
-        }
-
-        @Override
-        public boolean onLongClick(View view) {
-            itemClickListener.onClick(view, getAdapterPosition(), true);
-            return true;
         }
     }
 
@@ -508,7 +499,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                                 @Override
                                                 public void onComplete(@NonNull Task<Void> task) {
                                                     if (task.isSuccessful()) {
-                                                        myRef.child("Groups").child(edtNameGroup.getText().toString().trim()).child("members").child(mAuth.getCurrentUser().getUid()).setValue(mCurrentLocationMarker.getPosition().latitude + " " + mCurrentLocationMarker.getPosition().longitude);
+                                                        myRef.child("Groups").child(edtNameGroup.getText().toString().trim()).child("members").child(mAuth.getCurrentUser().getUid()).setValue(mLastLocation.getLatitude() + " " + mLastLocation.getLongitude());
                                                         Snackbar.make(myDrawer, "Success", Snackbar.LENGTH_SHORT).show();
                                                         dialog.dismiss();
                                                     }
@@ -593,7 +584,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             @Override
                             public void onDataChange(DataSnapshot dataSnapshot) {
                                 if (dataSnapshot.hasChild(edtNameGroup.getText().toString().trim())) {
-                                    myRef.child("Groups").child(edtNameGroup.getText().toString().trim()).child("members").child(mAuth.getCurrentUser().getUid()).setValue(mCurrentLocationMarker.getPosition().latitude + " " + mCurrentLocationMarker.getPosition().longitude);
+                                    if (dataSnapshot.hasChild(edtPwdGroup.getText().toString().trim())) {
+                                        myRef.child("Groups").child(edtNameGroup.getText().toString().trim()).child("members").child(mAuth.getCurrentUser().getUid()).setValue(mLastLocation.getLatitude() + " " + mLastLocation.getLongitude());
+                                    } else {
+                                        Toast.makeText(MainActivity.this, "Wrong, can't join!", Toast.LENGTH_SHORT).show();
+                                    }
                                 } else {
                                     Toast.makeText(MainActivity.this, "Group is not exists!", Toast.LENGTH_SHORT).show();
                                 }
@@ -679,7 +674,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                             @Override
                             public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-                                if (dataSnapshot.getKey().contains(mAuth.getCurrentUser().getUid())) {
+                                if (dataSnapshot.getKey().toString().contains(model.getName())) {
 
                                 } else {
                                     String[] a = dataSnapshot.getValue().toString().split(" ");
@@ -693,6 +688,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                     Marker marker = mMap.addMarker(markerOptions);
                                     hashMap.put(dataSnapshot.getKey(), marker);
                                 }
+
                             }
 
                             @Override
@@ -710,6 +706,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                             }
                         });
+                        mMap.clear();
                     }
                 });
 
@@ -733,15 +730,26 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             holder.btnDelete.setOnClickListener(new View.OnClickListener() {
                                 @Override
                                 public void onClick(View view) {
-
-                                    myRef.child("Groups").child(model.getName()).removeValue().addOnCompleteListener(new OnCompleteListener<Void>() {
+                                    AlertDialog.Builder ab = new AlertDialog.Builder(MainActivity.this, R.style.MyDialogTheme);
+                                    ab.setTitle("DELETE");
+                                    ab.setMessage("Are you sure?");
+                                    ab.setPositiveButton("YES", new DialogInterface.OnClickListener() {
                                         @Override
-                                        public void onComplete(@NonNull Task<Void> task) {
-                                            if (task.isSuccessful()) {
-                                                Toast.makeText(MainActivity.this, "Deleted!", Toast.LENGTH_SHORT).show();
-                                            }
+                                        public void onClick(DialogInterface dialogInterface, int i) {
+                                            myRef.child("Groups").child(model.getName()).removeValue().addOnCompleteListener(new OnCompleteListener<Void>() {
+                                                @Override
+                                                public void onComplete(@NonNull Task<Void> task) {
+                                                    if (task.isSuccessful()) {
+                                                        Toast.makeText(MainActivity.this, "Deleted!", Toast.LENGTH_SHORT).show();
+                                                        mMap.clear();
+                                                    }
+                                                }
+                                            });
                                         }
                                     });
+                                    ab.setNegativeButton("NO", null);
+                                    AlertDialog alertDialog = ab.create();
+                                    alertDialog.show();
                                 }
                             });
                         } else {
@@ -749,15 +757,30 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             holder.btnDelete.setOnClickListener(new View.OnClickListener() {
                                 @Override
                                 public void onClick(View view) {
-
-                                    myRef.child("Groups/" + model.getName() + "/members/" + mAuth.getCurrentUser().getUid()).removeValue().addOnCompleteListener(new OnCompleteListener<Void>() {
+                                    AlertDialog.Builder ab = new AlertDialog.Builder(MainActivity.this, R.style.MyDialogTheme);
+                                    ab.setTitle("DELETE");
+                                    ab.setMessage("Are you sure?");
+                                    ab.setPositiveButton("YES", new DialogInterface.OnClickListener() {
                                         @Override
-                                        public void onComplete(@NonNull Task<Void> task) {
-                                            if (task.isSuccessful()) {
-                                                Toast.makeText(MainActivity.this, "Quited!", Toast.LENGTH_SHORT).show();
+                                        public void onClick(DialogInterface dialogInterface, int i) {
+                                            if (model.getName() != null) {
+                                                myRef.child("Groups/" + model.getName() + "/members/" + mAuth.getCurrentUser().getUid()).removeValue().addOnCompleteListener(new OnCompleteListener<Void>() {
+                                                    @Override
+                                                    public void onComplete(@NonNull Task<Void> task) {
+                                                        if (task.isSuccessful()) {
+                                                            Toast.makeText(MainActivity.this, "Quited!", Toast.LENGTH_SHORT).show();
+                                                            toolbar.setSubtitle("");
+                                                            onLoadMember("");
+                                                            mMap.clear();
+                                                        }
+                                                    }
+                                                });
                                             }
                                         }
                                     });
+                                    ab.setNegativeButton("NO", null);
+                                    AlertDialog alertDialog = ab.create();
+                                    alertDialog.show();
                                 }
                             });
                         }
@@ -850,7 +873,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                                             @Override
                                                             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                                                                 Uri downloadUri = taskSnapshot.getDownloadUrl();
-                                                                myRef.child("Users/" + mAuth.getCurrentUser().getUid() + "/avatar").setValue(downloadUri);
+                                                                myRef.child("Users").child(mAuth.getCurrentUser().getUid()).child("avatar").setValue(downloadUri.toString());
                                                                 loading.dismiss();
                                                             }
                                                         })
@@ -889,56 +912,69 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         nav_restaurant.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(!isStatusRestaurant){
+                if (!isStatusRestaurant) {
                     nav_restaurant.setImageDrawable(getResources().getDrawable(R.drawable.ic_restaurant_white_24dp));
-                    isStatusRestaurant=true;
-                }else{
+                    isStatusRestaurant = true;
+                } else {
                     nav_restaurant.setImageDrawable(getResources().getDrawable(R.drawable.ic_restaurant_blue_24dp));
-                    isStatusRestaurant=false;
+                    isStatusRestaurant = false;
                 }
+                myDrawer.closeDrawer(GravityCompat.END);
             }
         });
         nav_gas.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(!isStatusGas){
+                if (!isStatusGas) {
                     nav_gas.setImageDrawable(getResources().getDrawable(R.drawable.ic_local_gas_station_white_24dp));
                     isStatusGas = true;
-                }else{
+                } else {
                     nav_gas.setImageDrawable(getResources().getDrawable(R.drawable.ic_local_gas_station_blue_24dp));
                     isStatusGas = false;
                 }
+                myDrawer.closeDrawer(GravityCompat.END);
             }
         });
         nav_hotel.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(!isStatusHotel){
+                if (!isStatusHotel) {
                     nav_hotel.setImageDrawable(getResources().getDrawable(R.drawable.ic_home_white_24dp));
                     isStatusHotel = true;
-                }else{
+                } else {
                     nav_hotel.setImageDrawable(getResources().getDrawable(R.drawable.ic_home_blue_24dp));
                     isStatusHotel = false;
                 }
+                myDrawer.closeDrawer(GravityCompat.END);
             }
         });
         nav_follow.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(!isStatusFollow){
+                if (!isStatusFollow) {
                     nav_follow.setText("Following");
                     isStatusFollow = true;
-                }else{
+                } else {
                     nav_follow.setText("Follow");
                     isStatusFollow = false;
                 }
+                myDrawer.closeDrawer(GravityCompat.END);
+            }
+        });
+
+        nav_sos.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                myRef.child("SOS").push().setValue(mAuth.getCurrentUser().getUid());
+                isStatus = false;
+                myDrawer.closeDrawer(GravityCompat.END);
             }
         });
     }
 
     private void onLoadMember(final String name) {
         NavigationView myNav2 = findViewById(R.id.myNav2);
-        myNav2.setPadding(0,onGetHeightStatus(),0,0);
+        myNav2.setPadding(0, onGetHeightStatus(), 0, 0);
         RecyclerView nav_rcvListMember = findViewById(R.id.nav_rcvListMember);
         nav_rcvListMember.setHasFixedSize(true);
         nav_rcvListMember.setLayoutManager(new LinearLayoutManager(this));
@@ -958,16 +994,16 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 myRef.child("Groups/" + name + "/members").addChildEventListener(new ChildEventListener() {
                     @Override
                     public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                        if(dataSnapshot.getValue().toString().contains(model)){
-                            myRef.child("Users/"+dataSnapshot.getKey()).addValueEventListener(new ValueEventListener() {
+                        if (dataSnapshot.getValue().toString().contains(model)) {
+                            myRef.child("Users/" + dataSnapshot.getKey()).addValueEventListener(new ValueEventListener() {
                                 @Override
                                 public void onDataChange(DataSnapshot dataSnapshot) {
                                     User user = dataSnapshot.getValue(User.class);
                                     holder.item_name.setText(user.getFullname());
-                                    if(TextUtils.isEmpty(user.getAvatar())){
+                                    if (TextUtils.isEmpty(user.getAvatar())) {
                                         user.setAvatar("a");
-                                    }else{
-                                    Picasso.with(MainActivity.this).load(user.getAvatar()).placeholder(R.drawable.defaut_avatar).into(holder.item_avatar);
+                                    } else {
+                                        Picasso.with(MainActivity.this).load(user.getAvatar()).placeholder(R.drawable.defaut_avatar).into(holder.item_avatar);
                                     }
                                 }
 
@@ -1003,17 +1039,121 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 holder.setItemClickListener(new ItemClickListener() {
                     @Override
                     public void onClick(View view, int position, boolean isLongClick) {
-                        if(isLongClick){
+                        if (isLongClick) {
 
-                        }else{
-                            Toast.makeText(MainActivity.this, ""+model, Toast.LENGTH_SHORT).show();
+                        } else {
+                            myRef.child("Groups/" + name + "/members").addChildEventListener(new ChildEventListener() {
+                                @Override
+                                public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                                    if (dataSnapshot.getValue().toString().contains(model)) {
+                                        myRef.child("Users/" + dataSnapshot.getKey()).addValueEventListener(new ValueEventListener() {
+                                            @Override
+                                            public void onDataChange(DataSnapshot dataSnapshot) {
+                                                User user = dataSnapshot.getValue(User.class);
+                                                if (user.getUid().equals(mAuth.getCurrentUser().getUid())) {
+                                                    Toast.makeText(MainActivity.this, "Can't beacasue that's you!", Toast.LENGTH_SHORT).show();
+                                                } else {
+                                                    Toast.makeText(MainActivity.this, "" + user.getFullname(), Toast.LENGTH_SHORT).show();
+                                                }
+                                            }
+
+                                            @Override
+                                            public void onCancelled(DatabaseError databaseError) {
+
+                                            }
+                                        });
+                                    }
+                                }
+
+                                @Override
+                                public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+
+                                }
+
+                                @Override
+                                public void onChildRemoved(DataSnapshot dataSnapshot) {
+
+                                }
+
+                                @Override
+                                public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+                                }
+
+                                @Override
+                                public void onCancelled(DatabaseError databaseError) {
+
+                                }
+                            });
                         }
                     }
                 });
+
+
             }
         };
 
         nav_rcvListMember.setAdapter(adapter_member);
         adapter_member.startListening();
+    }
+
+    public static class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
+        TextView txtvNameGroup, txtvQuantity, txtvFullname;
+        Button btnDelete;
+        ItemClickListener itemClickListener;
+
+        ViewHolder(View itemView) {
+            super(itemView);
+            txtvNameGroup = itemView.findViewById(R.id.txtvNameGroup);
+            txtvQuantity = itemView.findViewById(R.id.txtvQuantity);
+            txtvFullname = itemView.findViewById(R.id.txtvFullname);
+            btnDelete = itemView.findViewById(R.id.btnDelete);
+            itemView.setOnClickListener(this);
+            itemView.setOnLongClickListener(this);
+        }
+
+        public void setItemClickListener(ItemClickListener itemClickListener) {
+            this.itemClickListener = itemClickListener;
+        }
+
+        @Override
+        public void onClick(View view) {
+            itemClickListener.onClick(view, getAdapterPosition(), false);
+        }
+
+        @Override
+        public boolean onLongClick(View view) {
+            itemClickListener.onClick(view, getAdapterPosition(), true);
+            return true;
+        }
+    }
+
+    public static class ViewHolderMember extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
+        CircleImageView item_avatar;
+        TextView item_name;
+        ItemClickListener itemClickListener;
+
+        ViewHolderMember(View itemView) {
+            super(itemView);
+            item_avatar = itemView.findViewById(R.id.item_avatar);
+            item_name = itemView.findViewById(R.id.item_name);
+            itemView.setOnClickListener(this);
+            itemView.setOnLongClickListener(this);
+        }
+
+        public void setItemClickListener(ItemClickListener itemClickListener) {
+            this.itemClickListener = itemClickListener;
+        }
+
+        @Override
+        public void onClick(View view) {
+            itemClickListener.onClick(view, getAdapterPosition(), false);
+        }
+
+        @Override
+        public boolean onLongClick(View view) {
+            itemClickListener.onClick(view, getAdapterPosition(), true);
+            return true;
+        }
     }
 }

@@ -1,10 +1,10 @@
 package com.example.tkkil.phuot.Activities;
 
 import android.app.ProgressDialog;
+import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.view.View;
@@ -20,9 +20,9 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 
 public class ChangePasswordActivity extends AppCompatActivity {
+    Button btnChangePwd;
     private FirebaseAuth mAuth;
     private EditText edtOldPwd, edtNewPwd, edtRePwd;
-    Button btnChangePwd;
     private RelativeLayout main;
     private ProgressDialog mLoading;
 

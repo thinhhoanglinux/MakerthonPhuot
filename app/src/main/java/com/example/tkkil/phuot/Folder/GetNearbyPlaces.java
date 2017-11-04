@@ -7,9 +7,11 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -18,11 +20,14 @@ public class GetNearbyPlaces extends AsyncTask<Object, String, String>{
     private  String mGooglePlacesData;
     private GoogleMap mMap;
     private String mUrl;
+    private ArrayList<Marker> mMarkers;
+
 
     @Override
     protected String doInBackground(Object... objects) {
         mMap = (GoogleMap) objects[0];
         mUrl = (String) objects[1];
+        mMarkers = (ArrayList<Marker>) objects[2];
 
         DownloadUrl downloadUrl = new DownloadUrl();
 
@@ -58,9 +63,9 @@ public class GetNearbyPlaces extends AsyncTask<Object, String, String>{
             markerOptions.title(placeName + " : " + vincinity);
             markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
 
-            mMap.addMarker(markerOptions);
+            mMarkers.add(mMap.addMarker(markerOptions));
             mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
-            mMap.animateCamera(CameraUpdateFactory.zoomTo(10));
+            mMap.animateCamera(CameraUpdateFactory.zoomTo(15));
         }
     }
 }

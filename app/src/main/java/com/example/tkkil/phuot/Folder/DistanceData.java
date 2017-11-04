@@ -12,7 +12,7 @@ import java.util.List;
  * Created by anhho on 31/10/2017.
  */
 
-public class DataParser {
+public class DistanceData {
 
     private HashMap<String,String> getPlace(JSONObject googlePlaceJson){
         HashMap<String,String> googlePlacesMap = new HashMap<>();
@@ -78,57 +78,18 @@ public class DataParser {
         return getPlaces(jsonArray);
     }
 
-    public String[] parseDirections(String jsonData){
+    public HashMap<String,String> parseDirections(String jsonData){
         JSONArray jsonArray = null;
         JSONObject jsonObject;
 
         try {
             jsonObject = new JSONObject(jsonData);
-            jsonArray = jsonObject.getJSONArray("routes").getJSONObject(0).getJSONArray("legs")
-                    .getJSONObject(0).getJSONArray("steps");
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        return getPaths(jsonArray);
-    }
-
-    public HashMap<String,String> parseDuration(String jsonData){
-        JSONArray jsonArray = null;
-        JSONObject jsonObject;
-
-        try {
-            jsonObject = new JSONObject(jsonData);
-            jsonArray = jsonObject.getJSONArray("routes").getJSONObject(0).getJSONArray("legs")
-                    .getJSONObject(0).getJSONArray("steps");
+            jsonArray = jsonObject.getJSONArray("routes").getJSONObject(0).getJSONArray("legs");
         } catch (JSONException e) {
             e.printStackTrace();
         }
 
         return getDuration(jsonArray);
-    }
-
-    public  String[] getPaths(JSONArray jsonArray){
-        int count = jsonArray.length();
-        String[] polylines = new String[count];
-        for(int i =0; i<count; i++){
-            try {
-                polylines[i] = getPath(jsonArray.getJSONObject(i));
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        }
-
-        return polylines;
-    }
-    public String getPath(JSONObject jsonObject){
-        String polyline = "";
-        try {
-            polyline = jsonObject.getJSONObject("polyline").getString("points");
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        return polyline;
     }
 
     private HashMap<String,String> getDuration(JSONArray jsonArray) {

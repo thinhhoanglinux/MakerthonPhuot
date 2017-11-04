@@ -1,10 +1,10 @@
 package com.example.tkkil.phuot.Activities;
 
 import android.app.ProgressDialog;
+import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
@@ -19,14 +19,13 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 public class RegisterActivity extends AppCompatActivity implements View.OnClickListener {
-    private EditText edtEmail, edtPwd, edtUser, edtFull;
     TextView txtvBack;
     Button btnRegister;
+    private EditText edtEmail, edtPwd, edtUser, edtFull;
     private FirebaseAuth mAuth;
     private DatabaseReference mRef;
     private ProgressDialog mLoading;
@@ -74,19 +73,9 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
-                            FirebaseUser mUser = mAuth.getCurrentUser();
-                            if(mUser!=null){
-                                mUser.sendEmailVerification().addOnCompleteListener(new OnCompleteListener<Void>() {
-                                    @Override
-                                    public void onComplete(@NonNull Task<Void> task) {
-                                        Snackbar.make(main, "Please check email for verification!", Snackbar.LENGTH_SHORT).show();
-                                        mLoading.dismiss();
-                                        User user = new User(edtFull.getText().toString().trim(), edtUser.getText().toString().trim(), mAuth.getCurrentUser().getEmail(),
-                                                mAuth.getCurrentUser().getUid(), "", "", "", "", null);
-                                        mRef.child("Users/" + mAuth.getCurrentUser().getUid() + "/").setValue(user);
-                                    }
-                                });
-                            }
+                            User user = new User(edtFull.getText().toString().trim(), edtUser.getText().toString().trim(), mAuth.getCurrentUser().getEmail(),
+                                    mAuth.getCurrentUser().getUid(), "", "", "", "", null);
+                            mRef.child("Users/" + mAuth.getCurrentUser().getUid() + "/").setValue(user);
                         }
                     }
                 })

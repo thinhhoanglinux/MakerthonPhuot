@@ -17,6 +17,7 @@
         android:theme="@style/AppTheme">
         <activity
             android:name=".Activities.MainActivity"
+            android:screenOrientation="portrait"
             android:theme="@style/AppThemeStatus"/>
 
         <meta-data
@@ -37,8 +38,10 @@
             android:name=".Activities.RegisterActivity"
             android:screenOrientation="portrait"
             android:theme="@style/AppThemeFullScreen"/>
-        <activity android:name=".Activities.ChangePasswordActivity"/>
-        <activity android:name=".Activities.ChangeInformationActivity"/>
+        <activity android:name=".Activities.ChangePasswordActivity"
+            android:screenOrientation="portrait" />
+        <activity android:name=".Activities.ChangeInformationActivity"
+            android:screenOrientation="portrait" />
     </application>
 
 </manifest>

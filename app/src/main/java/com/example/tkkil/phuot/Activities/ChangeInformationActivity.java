@@ -1,9 +1,9 @@
 package com.example.tkkil.phuot.Activities;
 
+import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.view.View;
@@ -25,12 +25,12 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 public class ChangeInformationActivity extends AppCompatActivity {
+    Button btnChangeInfo;
+    User userRoot;
     private FirebaseAuth mAuth;
     private DatabaseReference myRef;
     private EditText edtFullname, edtBirthday, edtPhone, edtAddress, edtUser;
-    Button btnChangeInfo;
     private RelativeLayout main;
-    User userRoot;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
