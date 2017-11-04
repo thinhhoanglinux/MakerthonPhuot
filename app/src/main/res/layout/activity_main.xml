@@ -8,7 +8,7 @@
     android:background="@color/colorPrimary"
     android:fitsSystemWindows="true"
     tools:context="com.example.tkkil.phuot.Activities.MainActivity"
-    tools:openDrawer="start">
+    tools:openDrawer="end">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -78,37 +78,146 @@
                 android:layout_height="match_parent"
                 android:layout_below="@id/nav_email"
                 android:orientation="vertical">
+
                 <android.support.v7.widget.RecyclerView
-                    android:layout_marginTop="10dp"
-                    android:layout_weight="1"
                     android:id="@+id/nav_rcvListGroup"
                     android:layout_width="match_parent"
-                    android:layout_height="0dp"/>
+                    android:layout_height="0dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_weight="1" />
+
                 <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
                     android:layout_marginTop="10dp"
                     android:orientation="horizontal"
-                    android:weightSum="2"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp">
+                    android:weightSum="2">
+
                     <Button
-                        android:textColor="@android:color/white"
-                        android:text="@string/create"
-                        android:background="@android:color/holo_red_light"
                         android:id="@+id/nav_btnCreate"
-                        android:layout_weight="1"
                         android:layout_width="0dp"
-                        android:layout_height="wrap_content" />
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:background="@android:color/holo_red_light"
+                        android:text="@string/create"
+                        android:textColor="@android:color/white" />
+
                     <Button
-                        android:textColor="@android:color/white"
-                        android:text="@string/join"
-                        android:background="@android:color/holo_blue_light"
                         android:id="@+id/nav_btnJoin"
-                        android:layout_weight="1"
                         android:layout_width="0dp"
-                        android:layout_height="wrap_content" />
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:background="@android:color/holo_blue_light"
+                        android:text="@string/join"
+                        android:textColor="@android:color/white" />
                 </LinearLayout>
             </LinearLayout>
         </RelativeLayout>
 
+    </android.support.design.widget.NavigationView>
+
+    <android.support.design.widget.NavigationView
+        android:id="@+id/myNav2"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="end"
+        android:background="@color/colorPrimary"
+        android:fitsSystemWindows="true">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/nav_rcvListMember"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="10dp"
+                android:layout_above="@id/linearbutton2"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+            <View android:layout_height="2dp"
+                android:layout_below="@id/nav_rcvListMember"
+                android:background="#BCBCBC"
+                android:layout_width="match_parent"/>
+
+            <LinearLayout
+                android:id="@+id/linearbutton2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:orientation="horizontal"
+                android:weightSum="2">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <ImageView
+                        android:id="@+id/nav_restaurant"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp"
+                        android:layout_marginBottom="10dp"
+                        android:layout_marginTop="10dp"
+                        android:foreground="?android:attr/selectableItemBackground"
+                        android:src="@drawable/ic_restaurant_blue_24dp" />
+
+                    <ImageView
+                        android:id="@+id/nav_gas"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp"
+                        android:layout_marginBottom="10dp"
+                        android:layout_marginTop="10dp"
+                        android:foreground="?android:attr/selectableItemBackground"
+                        android:src="@drawable/ic_local_gas_station_blue_24dp" />
+
+                    <ImageView
+                        android:id="@+id/nav_hotel"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp"
+                        android:layout_marginBottom="10dp"
+                        android:layout_marginTop="10dp"
+                        android:foreground="?android:attr/selectableItemBackground"
+                        android:src="@drawable/ic_home_blue_24dp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_gravity="center"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:weightSum="2">
+                    <Button
+                        android:id="@+id/nav_follow"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:background="@null"
+                        android:foreground="?android:attr/selectableItemBackground"
+                        android:text="Follow"
+                        android:textColor="@android:color/white"
+                        android:textStyle="bold" />
+                    <LinearLayout
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp">
+                        <Button
+                            android:layout_gravity="center"
+                            android:id="@+id/nav_sos"
+                            android:layout_width="100dp"
+                            android:layout_height="100dp"
+                            android:background="@drawable/background_button_circle"
+                            android:foreground="?android:attr/selectableItemBackground"
+                            android:text="SOS"
+                            android:textColor="@android:color/white"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                </LinearLayout>
+            </LinearLayout>
+        </RelativeLayout>
     </android.support.design.widget.NavigationView>
 </android.support.v4.widget.DrawerLayout>

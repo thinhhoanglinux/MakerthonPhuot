@@ -36,6 +36,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -122,12 +123,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     ArrayList<Group> groups;
     GroupAdapter adapter_group;
 
-    FirebaseRecyclerAdapter adapter;
+    FirebaseRecyclerAdapter adapter, adapter_member;
 
     Toolbar toolbar;
 
     HashMap<String, Marker> hashMap = new HashMap<>();
 
+    ImageView nav_restaurant,nav_gas,nav_hotel;
+    Button nav_follow,nav_sos;
+    boolean isStatusRestaurant = false;
+    boolean isStatusGas = false;
+    boolean isStatusHotel = false;
+    boolean isStatusFollow = false;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -248,23 +255,21 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         if (toolbar.getSubtitle() != null) {
             myRef.child("Groups/" + toolbar.getSubtitle() + "/members").child(mAuth.getCurrentUser().getUid()).setValue(curLat + " " + curLong);
-            //Log.d("AAA",curLat + " " + curLong);*/
-
-
+//            Log.d("AAA", curLat + " " + curLong);
         }
 
 
-//        if (mCurrentLocationMarker != null) {
-//            mCurrentLocationMarker.remove();
-//        }
-//
-//        LatLng latLng = new LatLng(curLat,curLong);
-//        MarkerOptions markerOptions = new MarkerOptions();
-//        markerOptions.position(latLng);
-//        markerOptions.title("Current Location");
-//        markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
-//
-//        mCurrentLocationMarker = mMap.addMarker(markerOptions);
+        if (mCurrentLocationMarker != null) {
+            mCurrentLocationMarker.remove();
+        }
+
+        LatLng latLng = new LatLng(curLat, curLong);
+        MarkerOptions markerOptions = new MarkerOptions();
+        markerOptions.position(latLng);
+        markerOptions.title("Current Location");
+        markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
+
+        mCurrentLocationMarker = mMap.addMarker(markerOptions);
 
 
 //        mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
@@ -286,7 +291,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             buildGoogleApiClient();
             mMap.setMyLocationEnabled(true);
         }
-        Toast.makeText(this, "asd", Toast.LENGTH_SHORT).show();
     }
 
     private void initGoogleMap() {
@@ -319,6 +323,35 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             txtvQuantity = itemView.findViewById(R.id.txtvQuantity);
             txtvFullname = itemView.findViewById(R.id.txtvFullname);
             btnDelete = itemView.findViewById(R.id.btnDelete);
+            itemView.setOnClickListener(this);
+            itemView.setOnLongClickListener(this);
+        }
+
+        public void setItemClickListener(ItemClickListener itemClickListener) {
+            this.itemClickListener = itemClickListener;
+        }
+
+        @Override
+        public void onClick(View view) {
+            itemClickListener.onClick(view, getAdapterPosition(), false);
+        }
+
+        @Override
+        public boolean onLongClick(View view) {
+            itemClickListener.onClick(view, getAdapterPosition(), true);
+            return true;
+        }
+    }
+
+    public static class ViewHolderMember extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
+        CircleImageView item_avatar;
+        TextView item_name;
+        ItemClickListener itemClickListener;
+
+        ViewHolderMember(View itemView) {
+            super(itemView);
+            item_avatar = itemView.findViewById(R.id.item_avatar);
+            item_name = itemView.findViewById(R.id.item_name);
             itemView.setOnClickListener(this);
             itemView.setOnLongClickListener(this);
         }
@@ -561,19 +594,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             public void onDataChange(DataSnapshot dataSnapshot) {
                                 if (dataSnapshot.hasChild(edtNameGroup.getText().toString().trim())) {
                                     myRef.child("Groups").child(edtNameGroup.getText().toString().trim()).child("members").child(mAuth.getCurrentUser().getUid()).setValue(mCurrentLocationMarker.getPosition().latitude + " " + mCurrentLocationMarker.getPosition().longitude);
-                                    /*myRef.child("Groups").child(edtNameGroup.getText().toString().trim()).addValueEventListener(new ValueEventListener() {
-                                        @Override
-                                        public void onDataChange(DataSnapshot dataSnapshot) {
-                                            Group group = dataSnapshot.getValue(Group.class);
-                                            groups.add(group);
-                                            adapter_group.notifyDataSetChanged();
-                                        }
-
-                                        @Override
-                                        public void onCancelled(DatabaseError databaseError) {
-
-                                        }
-                                    });*/
                                 } else {
                                     Toast.makeText(MainActivity.this, "Group is not exists!", Toast.LENGTH_SHORT).show();
                                 }
@@ -636,6 +656,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     @Override
                     public void onClick(View view, int position, boolean isLongClick) {
                         toolbar.setSubtitle(model.getName());
+                        onLoadMember(model.getName());
                         myRef.child("Groups/" + model.getName() + "/members/").addChildEventListener(new ChildEventListener() {
                             @Override
                             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
@@ -672,8 +693,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                     Marker marker = mMap.addMarker(markerOptions);
                                     hashMap.put(dataSnapshot.getKey(), marker);
                                 }
-
-
                             }
 
                             @Override
@@ -857,5 +876,144 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 popupMenu.show();
             }
         });
+
+
+        //NavigationView Right
+
+        nav_restaurant = findViewById(R.id.nav_restaurant);
+        nav_gas = findViewById(R.id.nav_gas);
+        nav_hotel = findViewById(R.id.nav_hotel);
+        nav_follow = findViewById(R.id.nav_follow);
+        nav_sos = findViewById(R.id.nav_sos);
+
+        nav_restaurant.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(!isStatusRestaurant){
+                    nav_restaurant.setImageDrawable(getResources().getDrawable(R.drawable.ic_restaurant_white_24dp));
+                    isStatusRestaurant=true;
+                }else{
+                    nav_restaurant.setImageDrawable(getResources().getDrawable(R.drawable.ic_restaurant_blue_24dp));
+                    isStatusRestaurant=false;
+                }
+            }
+        });
+        nav_gas.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(!isStatusGas){
+                    nav_gas.setImageDrawable(getResources().getDrawable(R.drawable.ic_local_gas_station_white_24dp));
+                    isStatusGas = true;
+                }else{
+                    nav_gas.setImageDrawable(getResources().getDrawable(R.drawable.ic_local_gas_station_blue_24dp));
+                    isStatusGas = false;
+                }
+            }
+        });
+        nav_hotel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(!isStatusHotel){
+                    nav_hotel.setImageDrawable(getResources().getDrawable(R.drawable.ic_home_white_24dp));
+                    isStatusHotel = true;
+                }else{
+                    nav_hotel.setImageDrawable(getResources().getDrawable(R.drawable.ic_home_blue_24dp));
+                    isStatusHotel = false;
+                }
+            }
+        });
+        nav_follow.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(!isStatusFollow){
+                    nav_follow.setText("Following");
+                    isStatusFollow = true;
+                }else{
+                    nav_follow.setText("Follow");
+                    isStatusFollow = false;
+                }
+            }
+        });
+    }
+
+    private void onLoadMember(final String name) {
+        NavigationView myNav2 = findViewById(R.id.myNav2);
+        myNav2.setPadding(0,onGetHeightStatus(),0,0);
+        RecyclerView nav_rcvListMember = findViewById(R.id.nav_rcvListMember);
+        nav_rcvListMember.setHasFixedSize(true);
+        nav_rcvListMember.setLayoutManager(new LinearLayoutManager(this));
+
+        Query query = myRef.child("Groups/" + name + "/members");
+        FirebaseRecyclerOptions<String> options = new FirebaseRecyclerOptions.Builder<String>().setQuery(query, String.class).build();
+        adapter_member = new FirebaseRecyclerAdapter<String, ViewHolderMember>(options) {
+
+            @Override
+            public ViewHolderMember onCreateViewHolder(ViewGroup parent, int viewType) {
+                View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_member, parent, false);
+                return new ViewHolderMember(view);
+            }
+
+            @Override
+            protected void onBindViewHolder(final ViewHolderMember holder, int position, final String model) {
+                myRef.child("Groups/" + name + "/members").addChildEventListener(new ChildEventListener() {
+                    @Override
+                    public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                        if(dataSnapshot.getValue().toString().contains(model)){
+                            myRef.child("Users/"+dataSnapshot.getKey()).addValueEventListener(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(DataSnapshot dataSnapshot) {
+                                    User user = dataSnapshot.getValue(User.class);
+                                    holder.item_name.setText(user.getFullname());
+                                    if(TextUtils.isEmpty(user.getAvatar())){
+                                        user.setAvatar("a");
+                                    }else{
+                                    Picasso.with(MainActivity.this).load(user.getAvatar()).placeholder(R.drawable.defaut_avatar).into(holder.item_avatar);
+                                    }
+                                }
+
+                                @Override
+                                public void onCancelled(DatabaseError databaseError) {
+
+                                }
+                            });
+                        }
+                    }
+
+                    @Override
+                    public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+
+                    }
+
+                    @Override
+                    public void onChildRemoved(DataSnapshot dataSnapshot) {
+
+                    }
+
+                    @Override
+                    public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                });
+
+                holder.setItemClickListener(new ItemClickListener() {
+                    @Override
+                    public void onClick(View view, int position, boolean isLongClick) {
+                        if(isLongClick){
+
+                        }else{
+                            Toast.makeText(MainActivity.this, ""+model, Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+            }
+        };
+
+        nav_rcvListMember.setAdapter(adapter_member);
+        adapter_member.startListening();
     }
 }
