@@ -1,5 +1,6 @@
 package com.example.tkkil.phuot.Activities;
 
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
@@ -42,9 +43,6 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         mLoading.setTitle("Loading");
         mLoading.setMessage("Please wait...");
         init();
-
-        edtEmail.setText("hoangquocthinh134@gmail.com");
-        edtPwd.setText("111111");
     }
 
     @Override
@@ -85,6 +83,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     private void forGotDialog() {
         AlertDialog.Builder ab = new AlertDialog.Builder(this, R.style.MyDialogTheme);
         ab.setTitle("Send A Password Reset Email");
+        @SuppressLint("InflateParams")
         View view = LayoutInflater.from(this).inflate(R.layout.dialog_send_reset_password, null);
         ab.setView(view);
         edtEmailDialog = view.findViewById(R.id.edtEmailDialog);

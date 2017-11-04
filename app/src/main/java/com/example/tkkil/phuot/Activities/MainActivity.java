@@ -108,7 +108,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     FirebaseRecyclerAdapter adapter, adapter_member;
     Toolbar toolbar;
     HashMap<String, Marker> hashMap;
-    ImageView nav_restaurant, nav_gas, nav_hotel,nav_stop;
+    ImageView nav_restaurant, nav_gas, nav_hotel, nav_stop;
     Button nav_follow, nav_sos;
     boolean isStatusRestaurant = false;
     boolean isStatusGas = false;
@@ -162,12 +162,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 s = dataSnapshot.getValue(String.class);
                 if (s != null) {
                     if (!isStatus) {
-                        myRef.child("Users").child(s).addValueEventListener(new ValueEventListener() {
+                        myRef.child("SOS").addListenerForSingleValueEvent(new ValueEventListener() {
                             @Override
                             public void onDataChange(DataSnapshot dataSnapshot) {
-                                User user = dataSnapshot.getValue(User.class);
                                 AlertDialog.Builder ab = new AlertDialog.Builder(MainActivity.this, R.style.MyDialogTheme);
-                                ab.setMessage("HELP ME, PLEASE! My name is " + user.getFullname());
+                                ab.setMessage("HELP ME, PLEASE!");
                                 ab.setTitle("SOS");
                                 ab.setPositiveButton("OK", null);
                                 final AlertDialog alertDialog = ab.create();
@@ -315,11 +314,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         Double curLong = mLastLocation.getLongitude();
         if (!TextUtils.isEmpty(toolbar.getSubtitle())) {
             myRef.child("Groups/" + toolbar.getSubtitle() + "/members").child(mAuth.getCurrentUser().getUid()).setValue(curLat + " " + curLong);
-            Log.e("AAA",curLat+" " +curLong );
+            Log.e("AAA", curLat + " " + curLong);
         }
 
 
-        new Handler().postDelayed(new Runnable() {
+        /*new Handler().postDelayed(new Runnable() {
             @SuppressLint("SimpleDateFormat")
             @Override
             public void run() {
@@ -330,7 +329,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         .child(new SimpleDateFormat("dd-MM-yyyy HH:mm:ss").format(Calendar.getInstance().getTime()))
                         .setValue(mLastLocation.getLatitude() + " " + mLastLocation.getLongitude());
             }
-        }, 10000);
+        }, 10000);*/
         /*if (mCurrentLocationMarker != null) {
             mCurrentLocationMarker.remove();
         }
@@ -616,7 +615,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void initToolbar() {
         toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        toolbar.setTitle("Home");
         myDrawer = findViewById(R.id.myDrawer);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, myDrawer, toolbar, R.string.openDrawer, R.string.closeDrawer);
         myDrawer.addDrawerListener(toggle);
@@ -676,7 +674,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             @Override
                             public void onDataChange(DataSnapshot dataSnapshot) {
                                 if (dataSnapshot.hasChild(edtNameGroup.getText().toString().trim())) {
-                                    if (dataSnapshot.child(edtNameGroup.getText().toString().trim()).hasChild(edtPwdGroup.getText().toString().trim())) {
+                                    if (dataSnapshot.child(edtNameGroup.getText().toString().trim()).child("pass").getValue(String.class).equals(edtPwdGroup.getText().toString().trim())) {
                                         myRef.child("Groups").child(edtNameGroup.getText().toString().trim()).child("members").child(mAuth.getCurrentUser().getUid()).setValue(mLastLocation.getLatitude() + " " + mLastLocation.getLongitude());
                                     } else {
                                         Toast.makeText(MainActivity.this, "Wrong, can't join!", Toast.LENGTH_SHORT).show();
@@ -1017,7 +1015,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             @Override
             public void onClick(View view) {
                 startActivity(new Intent(MainActivity.this, ListLichTrinhActivity.class));
-                overridePendingTransition(R.anim.slide_down_to_up,R.anim.slide_default);
+                overridePendingTransition(R.anim.slide_down_to_up, R.anim.slide_default);
             }
         });
         nav_restaurant.setOnClickListener(new View.OnClickListener() {
@@ -1158,7 +1156,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     @Override
                     public void onChildAdded(DataSnapshot dataSnapshot, String s) {
                         if (dataSnapshot.getValue().toString().contains(model)) {
-                            myRef.child("Users/" + dataSnapshot.getKey()).addValueEventListener(new ValueEventListener() {
+                            myRef.child("Users/" + dataSnapshot.getKey()).addListenerForSingleValueEvent(new ValueEventListener() {
                                 @Override
                                 public void onDataChange(DataSnapshot dataSnapshot) {
                                     User user = dataSnapshot.getValue(User.class);
@@ -1305,7 +1303,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             for (int i = 0; i < polylinePlace.size(); i++) {
                 polylinePlace.get(i).remove();
                 String subtitle = toolbar.getSubtitle().toString();
-                if(!TextUtils.isEmpty(subtitle)){
+                if (!TextUtils.isEmpty(subtitle)) {
                     myRef.child("Groups").child(toolbar.getSubtitle().toString()).child("sharelocation").setValue(mLastLocation.getLatitude() + " " + mLastLocation.getLongitude());
                 }
             }
