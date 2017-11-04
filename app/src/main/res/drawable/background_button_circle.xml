@@ -6,6 +6,13 @@
         <size android:height="100dp"
             android:width="100dp"/>
         <solid android:color="#FFFF0000"/>
+        <gradient
+            android:angle="90"
+            android:type="linear"
+            android:useLevel="true"
+            android:startColor="#b71c1c"
+            android:centerColor="#d32f2f"
+            android:endColor="#f44336" />
     </shape>
 </item>
 </selector>

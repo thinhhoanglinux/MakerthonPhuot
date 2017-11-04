@@ -374,6 +374,22 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 dataTransfer[4] = randomMarker;
 
                 directionData.execute(dataTransfer);
+
+                if (toolbar.getSubtitle() != null) {
+                    myRef.child("Groups").child(toolbar.getSubtitle().toString()).child("pointFollow").setValue(latLng.latitude + " " + latLng.longitude);
+                    myRef.child("Groups").child(toolbar.getSubtitle().toString()).child("pointFollow").addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            String s = dataSnapshot.getValue(String.class);
+                            Toast.makeText(MainActivity.this, "" + s, Toast.LENGTH_SHORT).show();
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+
+                        }
+                    });
+                }
             }
         });
 
@@ -571,6 +587,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, myDrawer, toolbar, R.string.openDrawer, R.string.closeDrawer);
         myDrawer.addDrawerListener(toggle);
         toggle.syncState();
+
+        if (TextUtils.isEmpty(toolbar.getSubtitle())) {
+            nav_follow.setVisibility(View.INVISIBLE);
+        } else {
+
+        }
     }
 
     private int onGetHeightStatus() {
@@ -687,12 +709,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     @Override
                     public void onClick(View view, int position, boolean isLongClick) {
                         toolbar.setSubtitle(model.getName());
+                        nav_follow.setVisibility(View.VISIBLE);
                         onLoadMember(model.getName());
                         myRef.child("Groups/" + model.getName() + "/members/").addChildEventListener(new ChildEventListener() {
                             @Override
                             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
                                 if (dataSnapshot.getKey().contains(mAuth.getCurrentUser().getUid())) {
-
                                 } else {
                                     String[] a = dataSnapshot.getValue().toString().split(" ");
                                     Double lat = Double.parseDouble(a[0]);
@@ -705,6 +727,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 //                                    myRef.child("Groups/"+model.getName()+"/members/"+mAuth.getCurrentUser().getUid()).setValue(mCurrentLocationMarker.getPosition().latitude+" " +mCurrentLocationMarker.getPosition().longitude);
 
                                     myDrawer.closeDrawer(GravityCompat.START);
+
+
                                 }
                             }
 
@@ -745,6 +769,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         mMap.clear();
                     }
                 });
+
 
                 myRef.child("Users").child(model.getHost()).child("fullname").addValueEventListener(new ValueEventListener() {
                     @Override
@@ -999,25 +1024,39 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 myDrawer.closeDrawer(GravityCompat.END);
             }
         });
+        nav_sos.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                myRef.child("SOS").push().setValue(mAuth.getCurrentUser().getUid());
+                isStatus = false;
+                myDrawer.closeDrawer(GravityCompat.END);
+            }
+        });
+
         nav_follow.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if (!isStatusFollow) {
                     nav_follow.setText("Following");
                     isStatusFollow = true;
+                    myRef.child("Groups").child(toolbar.getSubtitle().toString()).child("host").addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            String s = dataSnapshot.getValue(String.class);
+                            if (s.contains(mAuth.getCurrentUser().getUid())) {
+                                Toast.makeText(MainActivity.this, "" + dataSnapshot.getKey(), Toast.LENGTH_SHORT).show();
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+
+                        }
+                    });
                 } else {
                     nav_follow.setText("Follow");
                     isStatusFollow = false;
                 }
-                myDrawer.closeDrawer(GravityCompat.END);
-            }
-        });
-
-        nav_sos.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                myRef.child("SOS").push().setValue(mAuth.getCurrentUser().getUid());
-                isStatus = false;
                 myDrawer.closeDrawer(GravityCompat.END);
             }
         });

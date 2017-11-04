@@ -130,36 +130,60 @@
 
             <android.support.v7.widget.RecyclerView
                 android:id="@+id/nav_rcvListMember"
-                android:layout_marginTop="10dp"
-                android:layout_marginBottom="10dp"
-                android:layout_above="@id/linearbutton2"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent" />
-            <View android:layout_height="2dp"
+                android:layout_height="match_parent"
+                android:layout_above="@id/linearbutton2"
+                android:layout_marginBottom="10dp"
+                android:layout_marginTop="10dp" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="2dp"
                 android:layout_below="@id/nav_rcvListMember"
-                android:background="#BCBCBC"
-                android:layout_width="match_parent"/>
+                android:background="#BCBCBC" />
 
             <LinearLayout
                 android:id="@+id/linearbutton2"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_alignParentBottom="true"
-                android:orientation="horizontal"
-                android:weightSum="2">
+                android:orientation="vertical">
+
+                <Button
+                    android:layout_marginTop="10dp"
+                    android:id="@+id/nav_sos"
+                    android:layout_width="100dp"
+                    android:layout_height="100dp"
+                    android:layout_gravity="center"
+                    android:background="@drawable/background_button_circle"
+                    android:foreground="?android:attr/selectableItemBackground"
+                    android:text="SOS"
+                    android:textColor="@android:color/white"
+                    android:textStyle="bold" />
+
+                <Button
+                    android:layout_marginBottom="10dp"
+                    android:layout_marginTop="10dp"
+                    android:id="@+id/nav_follow"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/background_btn_primary"
+                    android:foreground="?android:attr/selectableItemBackground"
+                    android:text="@string/follow"
+                    android:textColor="@android:color/white"
+                    android:textStyle="bold" />
 
                 <LinearLayout
-                    android:layout_width="0dp"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:orientation="vertical">
+                    android:orientation="horizontal">
 
                     <ImageView
                         android:id="@+id/nav_restaurant"
                         android:layout_width="match_parent"
                         android:layout_height="50dp"
-                        android:layout_marginBottom="10dp"
-                        android:layout_marginTop="10dp"
+                        android:layout_weight="1"
                         android:foreground="?android:attr/selectableItemBackground"
                         android:src="@drawable/ic_restaurant_blue_24dp" />
 
@@ -167,8 +191,7 @@
                         android:id="@+id/nav_gas"
                         android:layout_width="match_parent"
                         android:layout_height="50dp"
-                        android:layout_marginBottom="10dp"
-                        android:layout_marginTop="10dp"
+                        android:layout_weight="1"
                         android:foreground="?android:attr/selectableItemBackground"
                         android:src="@drawable/ic_local_gas_station_blue_24dp" />
 
@@ -176,46 +199,9 @@
                         android:id="@+id/nav_hotel"
                         android:layout_width="match_parent"
                         android:layout_height="50dp"
-                        android:layout_marginBottom="10dp"
-                        android:layout_marginTop="10dp"
+                        android:layout_weight="1"
                         android:foreground="?android:attr/selectableItemBackground"
                         android:src="@drawable/ic_home_blue_24dp" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_gravity="center"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:weightSum="2">
-                    <Button
-                        android:id="@+id/nav_follow"
-                        android:layout_width="match_parent"
-                        android:layout_height="0dp"
-                        android:layout_weight="1"
-                        android:background="@null"
-                        android:foreground="?android:attr/selectableItemBackground"
-                        android:text="Follow"
-                        android:textColor="@android:color/white"
-                        android:textStyle="bold" />
-                    <LinearLayout
-                        android:layout_weight="1"
-                        android:gravity="center"
-                        android:layout_width="match_parent"
-                        android:layout_height="0dp">
-                        <Button
-                            android:layout_gravity="center"
-                            android:id="@+id/nav_sos"
-                            android:layout_width="100dp"
-                            android:layout_height="100dp"
-                            android:background="@drawable/background_button_circle"
-                            android:foreground="?android:attr/selectableItemBackground"
-                            android:text="SOS"
-                            android:textColor="@android:color/white"
-                            android:textStyle="bold" />
-                    </LinearLayout>
-
                 </LinearLayout>
             </LinearLayout>
         </RelativeLayout>
