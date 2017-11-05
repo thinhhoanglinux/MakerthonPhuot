@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.example.tkkil.phuot.Activities.ListLichTrinhActivity">
+    <android.support.v7.widget.Toolbar
+        app:navigationIcon="@drawable/ic_chevron_left_black_24dp"
+        app:subtitleTextColor="@android:color/white"
+        app:titleTextColor="@android:color/white"
+        app:title="Nhật ký hành trình"
+        android:id="@+id/toolbar"
+        android:background="@color/colorPrimary"
+        android:minHeight="?attr/actionBarSize"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+    <android.support.v7.widget.RecyclerView
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        android:paddingTop="5dp"
+        android:paddingBottom="5dp"
+        android:id="@+id/rcv_listLichTrinh"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+</LinearLayout>

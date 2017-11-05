@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="com.example.tkkil.phuot">
+    package="com.example.tkkil.phuot">
 
-    <uses-permission android:name="android.permission.INTERNET"/>
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-    <uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES"/>
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES" />
 
     <application
         android:allowBackup="true"
@@ -18,30 +18,33 @@
         <activity
             android:name=".Activities.MainActivity"
             android:screenOrientation="portrait"
-            android:theme="@style/AppThemeStatus"/>
+            android:theme="@style/AppThemeStatus" />
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyDzXdWTlVU1Vf2YUL1vlmgPSLpBpDr5OcI"/>
+            android:value="AIzaSyDzXdWTlVU1Vf2YUL1vlmgPSLpBpDr5OcI" />
 
         <activity
             android:name=".Activities.LoginActivity"
             android:screenOrientation="portrait"
             android:theme="@style/AppThemeFullScreen">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
+                <action android:name="android.intent.action.MAIN" />
 
-                <category android:name="android.intent.category.LAUNCHER"/>
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <activity
             android:name=".Activities.RegisterActivity"
             android:screenOrientation="portrait"
-            android:theme="@style/AppThemeFullScreen"/>
-        <activity android:name=".Activities.ChangePasswordActivity"
+            android:theme="@style/AppThemeFullScreen" />
+        <activity
+            android:name=".Activities.ChangePasswordActivity"
             android:screenOrientation="portrait" />
-        <activity android:name=".Activities.ChangeInformationActivity"
+        <activity
+            android:name=".Activities.ChangeInformationActivity"
             android:screenOrientation="portrait" />
+        <activity android:name=".Activities.ListLichTrinhActivity"></activity>
     </application>
 
 </manifest>

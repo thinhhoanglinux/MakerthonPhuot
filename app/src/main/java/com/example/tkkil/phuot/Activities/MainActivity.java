@@ -108,7 +108,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     FirebaseRecyclerAdapter adapter, adapter_member;
     Toolbar toolbar;
     HashMap<String, Marker> hashMap;
-    ImageView nav_restaurant, nav_gas, nav_hotel;
+    ImageView nav_restaurant, nav_gas, nav_hotel,nav_stop;
     Button nav_follow, nav_sos;
     boolean isStatusRestaurant = false;
     boolean isStatusGas = false;
@@ -318,6 +318,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             Log.e("AAA",curLat+" " +curLong );
         }
 
+
         new Handler().postDelayed(new Runnable() {
             @SuppressLint("SimpleDateFormat")
             @Override
@@ -326,11 +327,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 myRef.child("Users")
                         .child(mAuth.getCurrentUser().getUid())
                         .child("hanhtrinh")
-                        .child(new SimpleDateFormat("yyyyMMddHHmmss").format(Calendar.getInstance().getTime()))
+                        .child(new SimpleDateFormat("dd-MM-yyyy HH:mm:ss").format(Calendar.getInstance().getTime()))
                         .setValue(mLastLocation.getLatitude() + " " + mLastLocation.getLongitude());
             }
-        }, 15*60*1000);
-
+        }, 10000);
         /*if (mCurrentLocationMarker != null) {
             mCurrentLocationMarker.remove();
         }
@@ -676,7 +676,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             @Override
                             public void onDataChange(DataSnapshot dataSnapshot) {
                                 if (dataSnapshot.hasChild(edtNameGroup.getText().toString().trim())) {
-                                    if (dataSnapshot.hasChild(edtPwdGroup.getText().toString().trim())) {
+                                    if (dataSnapshot.child(edtNameGroup.getText().toString().trim()).hasChild(edtPwdGroup.getText().toString().trim())) {
                                         myRef.child("Groups").child(edtNameGroup.getText().toString().trim()).child("members").child(mAuth.getCurrentUser().getUid()).setValue(mLastLocation.getLatitude() + " " + mLastLocation.getLongitude());
                                     } else {
                                         Toast.makeText(MainActivity.this, "Wrong, can't join!", Toast.LENGTH_SHORT).show();
@@ -1012,6 +1012,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         nav_hotel = findViewById(R.id.nav_hotel);
         nav_follow = findViewById(R.id.nav_follow);
         nav_sos = findViewById(R.id.nav_sos);
+        nav_stop = findViewById(R.id.nav_stop);
+        nav_stop.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(MainActivity.this, ListLichTrinhActivity.class));
+                overridePendingTransition(R.anim.slide_down_to_up,R.anim.slide_default);
+            }
+        });
         nav_restaurant.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
